@@ -1,0 +1,12 @@
+07-06-2022 19:57:46 root:INFO:n_proc: 20
+07-06-2022 19:57:46 root:INFO:image_output_dir: /mnt/cephfs/share/lyma/datasets/fod_mix_3_20220606/
+07-06-2022 19:57:46 root:INFO:inria is processing
+07-06-2022 19:57:46 root:INFO:nds_path: /mnt/cephfs/share/lyma/datasets/fod_mix_3_20220606/inria_images_pool.nds
+07-06-2022 19:58:05 root:INFO:nyuv2 is processing
+07-06-2022 19:58:05 root:INFO:nds_path: /mnt/cephfs/share/lyma/datasets/fod_mix_3_20220606/nyuv2_images_pool.nds
+07-06-2022 19:58:29 root:INFO:posetrack is processing
+07-06-2022 19:58:29 root:INFO:nds_path: /mnt/cephfs/share/lyma/datasets/fod_mix_3_20220606/posetrack_images_pool.nds
+07-06-2022 19:59:03 root:INFO:
+07-06-2022 19:59:03 root:INFO:done
+07-06-2022 19:59:03 root:INFO:time_cost: 76.25533413887024 s == 1.2709222356478374 m == 0.02118203726079729 h
+07-06-2022 19:59:03 root:INFO:
