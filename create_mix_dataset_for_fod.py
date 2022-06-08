@@ -29,10 +29,13 @@ from bfuncs import (
 )
 from process import process_inria, process_nyuv2, process_posetrack
 from config.data_config import IMAGE_OUTPUT_DIR
-from utils.depth_to_uint16 import pretty_depth
+from utils.process_segmentaion import process_segmentation
+from utils.process_depth import process_depth
+from utils.process_ori_image import process_ori_image
+from utils.format_nds import format_nds
 
 
-def func_callback(args, pbar, nds_path):
+def write_nds_file(args, pbar, nds_path):
     pbar.update()
     write_file_obj = open(nds_path, "a+")
     write_file_obj.write(json.dumps(args[0][0]))
@@ -54,24 +57,14 @@ def func_core(task_info):
     output_image_path = os.path.join(obj.NAME,  "images", image_name_only)
     ouput_depth_path = os.path.join(obj.NAME, "depths", image_name_only.split(".")[0]+".png")
     output_seg_path = os.path.join(obj.NAME, "segmentations", image_name_only.split(".")[0]+".png")
-    # 统一处理depth到uint16类型
-    uint16_depth = pretty_depth(ori_depth_path)
-    # 保存为png无损格式
-    cv2.imwrite(os.path.join(IMAGE_OUTPUT_DIR, ouput_depth_path), uint16_depth)
 
-    shutil.copy(ori_seg_path, os.path.join(IMAGE_OUTPUT_DIR, output_seg_path))
-    shutil.copy(ori_image_path, os.path.join(IMAGE_OUTPUT_DIR, output_image_path))
+    process_depth(ori_depth_path, ouput_depth_path)
+    process_segmentation(ori_seg_path, output_seg_path)
+    process_ori_image(ori_image_path, output_image_path)
 
-    height, weight, *tmp = image.shape
-    nds_data_item["image_id"] = "{:0>8d}".format(image_id)
-    nds_data_item["image_path"] = output_image_path
-
-    nds_data_item["depth_path"] = ouput_depth_path
-    nds_data_item["segmentation_path"] = output_seg_path
-    nds_data_item["image_height"] = height
-    nds_data_item["image_width"] = weight
-    nds_data_item["extra_info"] = dict()
-    nds_data.append(copy.deepcopy(nds_data_item))
+    nds_info = [image_id, output_image_path, ouput_depth_path, output_seg_path, image.shape]
+    nds_data_item = format_nds(nds_info)
+    nds_data.append(nds_data_item)
     return nds_data
 
 
@@ -84,9 +77,9 @@ def main():
     check_and_make_dir(IMAGE_OUTPUT_DIR)
     logging.info(f"image_output_dir: {IMAGE_OUTPUT_DIR}")
 
-    process_inria.process(n_proc, func_core, func_callback)
-    process_nyuv2.process(n_proc, func_core, func_callback)
-    process_posetrack.process(n_proc, func_core, func_callback)
+    process_inria.process(n_proc, func_core, write_nds_file)
+    process_nyuv2.process(n_proc, func_core, write_nds_file)
+    process_posetrack.process(n_proc, func_core, write_nds_file)
 
     time_end = time.time()
     time_cost = time_end - time_start
@@ -100,7 +93,7 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="test/track.log", format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
+    logging.basicConfig(filename="log/track.log", format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                         datefmt="%d-%m-%Y %H:%M:%S", level=logging.DEBUG)
 
     main()
