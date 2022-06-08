@@ -1,3 +1,6 @@
 test
 log
 utils/__pycache__
+process/__pycache__
+config/__pycache__
+*cpython-37.py[cod]

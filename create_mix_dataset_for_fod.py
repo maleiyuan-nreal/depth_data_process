@@ -17,6 +17,7 @@ from tqdm import tqdm
 import logging
 import multiprocessing as mp
 import glob
+import argparse
 
 
 import cv2
@@ -24,11 +25,9 @@ import numpy as np
 
 
 from bfuncs import (
-    check_and_make_dir, check_and_make_dir,
-    get_file_name
+    check_and_make_dir, get_file_name
 )
-from process import process_inria, process_nyuv2, process_posetrack
-from config.data_config import IMAGE_OUTPUT_DIR
+from process import process_inria, process_nyuv2, process_posetrack, process_redweb
 from utils.process_segmentaion import process_segmentation
 from utils.process_depth import process_depth
 from utils.process_ori_image import process_ori_image
@@ -44,42 +43,32 @@ def write_nds_file(args, pbar, nds_path):
 
 
 def func_core(task_info):
-    ori_image_path, image_id, obj = task_info
-
+    path_dict, image_id = task_info
     nds_data = list()
     nds_data_item = dict()
-    image = cv2.imread(ori_image_path)
-    image_name_only = get_file_name(ori_image_path)
+    image = cv2.imread(path_dict["ori_images_path"])
 
-    ori_depth_path = os.path.join(obj.INPUT_DIR, obj.NAME,  "depths", image_name_only)
-    ori_seg_path = os.path.join(obj.INPUT_DIR, obj.NAME,  "segmentations", image_name_only.split(".")[0]+".png")
-    # 保存相对路径即可
-    output_image_path = os.path.join(obj.NAME,  "images", image_name_only)
-    ouput_depth_path = os.path.join(obj.NAME, "depths", image_name_only.split(".")[0]+".png")
-    output_seg_path = os.path.join(obj.NAME, "segmentations", image_name_only.split(".")[0]+".png")
+    process_depth(args, path_dict["ori_depths_path"], path_dict["output_depths_path"])
+    process_segmentation(args, path_dict["ori_segmentations_path"], path_dict["output_segmentations_path"])
+    process_ori_image(args, path_dict["ori_images_path"], path_dict["output_images_path"])
 
-    process_depth(ori_depth_path, ouput_depth_path)
-    process_segmentation(ori_seg_path, output_seg_path)
-    process_ori_image(ori_image_path, output_image_path)
-
-    nds_info = [image_id, output_image_path, ouput_depth_path, output_seg_path, image.shape]
-    nds_data_item = format_nds(nds_info)
+    nds_data_item = format_nds(image_id, image.shape, path_dict)
     nds_data.append(nds_data_item)
     return nds_data
 
 
-def main():
+def main(args):
     time_start = time.time()
 
-    n_proc = 20
-    logging.info(f"n_proc: {n_proc}")
+    logging.info(f"n_proc: {args.n_proc}")
 
-    check_and_make_dir(IMAGE_OUTPUT_DIR)
-    logging.info(f"image_output_dir: {IMAGE_OUTPUT_DIR}")
+    check_and_make_dir(args.output_path)
+    logging.info(f"image_output_dir: {args.output_path}")
 
-    process_inria.process(n_proc, func_core, write_nds_file)
-    process_nyuv2.process(n_proc, func_core, write_nds_file)
-    process_posetrack.process(n_proc, func_core, write_nds_file)
+    # process_inria.process(args, func_core, write_nds_file)
+    # process_nyuv2.process(args, func_core, write_nds_file)
+    # process_posetrack.process(args, func_core, write_nds_file)
+    process_redweb.process(args, func_core, write_nds_file)
 
     time_end = time.time()
     time_cost = time_end - time_start
@@ -93,7 +82,20 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-o', '--output_path',
+                        default='output',
+                        help='folder with output images and nds file'
+                        )
+
+    parser.add_argument('-n', '--n_proc',
+                        default=20,
+                        help='mp process number'
+                        )
+    args = parser.parse_args()
+
     logging.basicConfig(filename="log/track.log", format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                         datefmt="%d-%m-%Y %H:%M:%S", level=logging.DEBUG)
 
-    main()
+    main(args)

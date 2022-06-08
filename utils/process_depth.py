@@ -3,9 +3,6 @@ import os
 import numpy as np
 
 
-from config.data_config import IMAGE_OUTPUT_DIR
-
-
 def pretty_depth(depth_path):
     """
     用PIL是无法读取uint16格式的数据的,详情见:
@@ -23,12 +20,7 @@ def pretty_depth(depth_path):
     if len(depth_shape) == 3:
         assert (depth[...,0] == depth[...,1]).all()
         assert (depth[...,0] == depth[...,2]).all()
-        if depth.dtype == np.uint16:
-            depth = depth[...,0]
-        elif depth.dtype == np.uint8:
-            depth = cv2.cvtColor(depth,cv2.COLOR_BGR2GRAY)
-        else:
-            raise Exception("unknown data type!")
+        depth = depth[...,0]
     elif len(depth_shape) == 2:
         pass
     else:
@@ -42,7 +34,7 @@ def pretty_depth(depth_path):
     return uint16_depth
 
 
-def process_depth(ori_depth_path, ouput_depth_path):
+def process_depth(args, ori_depth_path, ouput_depth_path):
     """
     关于深度图的处理
     requirement: 单通道+uint16
@@ -51,4 +43,4 @@ def process_depth(ori_depth_path, ouput_depth_path):
     # 统一处理depth到uint16类型
     uint16_depth = pretty_depth(ori_depth_path)
     # 保存为png无损格式
-    cv2.imwrite(os.path.join(IMAGE_OUTPUT_DIR, ouput_depth_path), uint16_depth)
+    cv2.imwrite(os.path.join(args.output_path, ouput_depth_path), uint16_depth)
