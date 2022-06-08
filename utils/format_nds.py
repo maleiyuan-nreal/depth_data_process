@@ -8,7 +8,7 @@ def format_nds(image_id, image_shape, path_dict):
     nds_data_item["image_path"] = path_dict["output_images_path"]
 
     nds_data_item["depth_path"] = path_dict["output_depths_path"]
-    nds_data_item["segmentation_path"] = path_dict["output_segmentations_path"]
+    nds_data_item["segmentation_path"] = path_dict["output_segmentations_path"] if "output_segmentations_path" in path_dict else ""
     nds_data_item["image_height"] = height
     nds_data_item["image_width"] = weight
     nds_data_item["extra_info"] = dict()

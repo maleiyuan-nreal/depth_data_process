@@ -20,11 +20,12 @@
     NYUv2
     posetrack
     inria
+    RedWeb
 ```
 
 ## RUN command
 ```
-    python create_mix_dataset_for_fod.py
+    python create_mix_dataset_for_midas.py -o PATH
 
 ```
 

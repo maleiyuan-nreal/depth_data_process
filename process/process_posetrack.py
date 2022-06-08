@@ -17,7 +17,7 @@ def process(args, func_core, func_callback):
     posetrack_obj = POSETRCK(args.output_path)
     
     p = os.path.join(posetrack_obj.INPUT_DIR, posetrack_obj.NAME)
-    img_list = glob.glob(p+"/"+posetrack_obj.INPUT_DIR[0]+"/*.jpg")
+    img_list = glob.glob(p+"/"+posetrack_obj.SUB_INPUT_DIR[0]+"/*.jpg")
     
     pbar = common_process(posetrack_obj, args, len(img_list))
     
@@ -28,7 +28,7 @@ def process(args, func_core, func_callback):
     for ori_image_path in img_list:
         image_id += 1
         path_dict = get_path(posetrack_obj, ori_image_path)
-        task_info = [path_dict, image_id]
+        task_info = [path_dict, image_id, posetrack_obj]
         pool.apply_async(func_core, (task_info, ), callback=call_back)
 
     pool.close()

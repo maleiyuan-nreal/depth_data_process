@@ -43,14 +43,20 @@ def write_nds_file(args, pbar, nds_path):
 
 
 def func_core(task_info):
-    path_dict, image_id = task_info
+    path_dict, image_id, obj = task_info
     nds_data = list()
     nds_data_item = dict()
     image = cv2.imread(path_dict["ori_images_path"])
 
-    process_depth(args, path_dict["ori_depths_path"], path_dict["output_depths_path"])
-    process_segmentation(args, path_dict["ori_segmentations_path"], path_dict["output_segmentations_path"])
-    process_ori_image(args, path_dict["ori_images_path"], path_dict["output_images_path"])
+    for data_type in obj.DATA_TYPE_LIST:
+        if data_type == "depths":
+            process_depth(args, path_dict["ori_depths_path"], path_dict["output_depths_path"])
+        elif data_type == "segmentations":
+            process_segmentation(args, path_dict["ori_segmentations_path"], path_dict["output_segmentations_path"])
+        elif data_type == "images":
+            process_ori_image(args, path_dict["ori_images_path"], path_dict["output_images_path"])
+        else:
+            raise NotImplementedError 
 
     nds_data_item = format_nds(image_id, image.shape, path_dict)
     nds_data.append(nds_data_item)
@@ -65,9 +71,9 @@ def main(args):
     check_and_make_dir(args.output_path)
     logging.info(f"image_output_dir: {args.output_path}")
 
-    # process_inria.process(args, func_core, write_nds_file)
-    # process_nyuv2.process(args, func_core, write_nds_file)
-    # process_posetrack.process(args, func_core, write_nds_file)
+    process_inria.process(args, func_core, write_nds_file)
+    process_nyuv2.process(args, func_core, write_nds_file)
+    process_posetrack.process(args, func_core, write_nds_file)
     process_redweb.process(args, func_core, write_nds_file)
 
     time_end = time.time()

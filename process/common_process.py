@@ -17,8 +17,9 @@ def common_process(obj, args, total):
     """
     dataset_name = obj.NAME
     check_and_make_dir(os.path.join(args.output_path, dataset_name))
+    check_and_make_dir(os.path.join(args.output_path, obj.OUTPUT_DIR))
     for dirs in obj.DATA_TYPE_LIST:
-        check_and_make_dir(os.path.join(args.output_path, dataset_name, dirs))
+        check_and_make_dir(os.path.join(args.output_path, dataset_name, "data", dirs))
         
     logging.info(obj.NAME+" is processing")
     
@@ -45,20 +46,20 @@ def get_path(obj, ori_image_path):
     path_dict = dict()
     path_dict["ori_images_path"] = ori_image_path
     image_name_only = get_file_name(ori_image_path)
-    for input_dir, data_type in zip([obj.SUB_INPUT_DIR, obj.DATA_TYPE_LIST]):
+    for input_dir, data_type in zip(obj.SUB_INPUT_DIR, obj.DATA_TYPE_LIST):
         if data_type == "images":
-            path_dict["output_"+data_type+"_path"] = os.path.join(obj.NAME,  data_type, image_name_only)
+            path_dict["output_"+data_type+"_path"] = os.path.join(obj.OUTPUT_DIR, data_type, image_name_only)
         elif data_type == "depths":
-            path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only)
-            if obj.SUFFIX == "jpg":
-                path_dict["output_"+data_type+"_path"] = os.path.join(obj.NAME, data_type, image_name_only.split(".")[0]+".png")
-            elif obj.SUFFIX == "png":
-                path_dict["output_"+data_type+"_path"] = os.path.join(obj.NAME, data_type, image_name_only)
+            if obj.DPETH_SUFFIX == "jpg":
+                path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only)
+            elif obj.DPETH_SUFFIX == "png":
+                path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only.split(".")[0]+".png")
             else:
                 raise NotImplementedError 
+            path_dict["output_"+data_type+"_path"] = os.path.join(obj.OUTPUT_DIR, data_type, image_name_only.split(".")[0]+".png")
         elif data_type == "segmentations":
             path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only.split(".")[0]+".png")
-            path_dict["output_"+data_type+"_path"] = os.path.join(obj.NAME, data_type, image_name_only.split(".")[0]+".png")
+            path_dict["output_"+data_type+"_path"] = os.path.join(obj.OUTPUT_DIR, data_type, image_name_only.split(".")[0]+".png")
         else:
             raise Exception("Unknown data type: " + data_type) 
         
