@@ -34,33 +34,26 @@ from utils.process_ori_image import process_ori_image
 from utils.format_nds import format_nds
 
 
-def write_nds_file(args, pbar, nds_path):
+def collect_result(args, pbar, nds_data):
     pbar.update()
-    write_file_obj = open(nds_path, "a+")
-    write_file_obj.write(json.dumps(args[0][0]))
-    write_file_obj.write("\n")
-    write_file_obj.close()
-
+    nds_data.append(args[0])
 
 def func_core(task_info):
     path_dict, image_id, obj = task_info
-    nds_data = list()
-    nds_data_item = dict()
     image = cv2.imread(path_dict["ori_images_path"])
 
     for data_type in obj.DATA_TYPE_LIST:
         if data_type == "depths":
-            process_depth(args, path_dict["ori_depths_path"], path_dict["output_depths_path"])
+            process_depth(args, path_dict["ori_depths_path"], os.path.join(obj.NAME, path_dict["output_depths_path"]))
         elif data_type == "segmentations":
-            process_segmentation(args, path_dict["ori_segmentations_path"], path_dict["output_segmentations_path"])
+            process_segmentation(args, path_dict["ori_segmentations_path"], os.path.join(obj.NAME, path_dict["output_segmentations_path"]))
         elif data_type == "images":
-            process_ori_image(args, path_dict["ori_images_path"], path_dict["output_images_path"])
+            process_ori_image(args, path_dict["ori_images_path"], os.path.join(obj.NAME, path_dict["output_images_path"]))
         else:
             raise NotImplementedError 
 
     nds_data_item = format_nds(image_id, image.shape, path_dict)
-    nds_data.append(nds_data_item)
-    return nds_data
+    return nds_data_item
 
 
 def main(args):
@@ -71,10 +64,10 @@ def main(args):
     check_and_make_dir(args.output_path)
     logging.info(f"image_output_dir: {args.output_path}")
 
-    process_inria.process(args, func_core, write_nds_file)
-    process_nyuv2.process(args, func_core, write_nds_file)
-    process_posetrack.process(args, func_core, write_nds_file)
-    process_redweb.process(args, func_core, write_nds_file)
+    process_inria.process(args, func_core, collect_result)
+    process_nyuv2.process(args, func_core, collect_result)
+    process_posetrack.process(args, func_core, collect_result)
+    process_redweb.process(args, func_core, collect_result)
 
     time_end = time.time()
     time_cost = time_end - time_start
@@ -97,6 +90,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-n', '--n_proc',
                         default=20,
+                        type=int,
                         help='mp process number'
                         )
     args = parser.parse_args()

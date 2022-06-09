@@ -17,7 +17,7 @@ def common_process(obj, args, total):
     """
     dataset_name = obj.NAME
     check_and_make_dir(os.path.join(args.output_path, dataset_name))
-    check_and_make_dir(os.path.join(args.output_path, obj.OUTPUT_DIR))
+    check_and_make_dir(os.path.join(args.output_path, dataset_name, obj.OUTPUT_DIR))
     for dirs in obj.DATA_TYPE_LIST:
         check_and_make_dir(os.path.join(args.output_path, dataset_name, "data", dirs))
         
