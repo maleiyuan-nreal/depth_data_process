@@ -19,8 +19,12 @@ def process(args, func_core, func_callback):
     p = os.path.join(posetrack_obj.INPUT_DIR, posetrack_obj.NAME)
     img_list = glob.glob(p+"/"+posetrack_obj.SUB_INPUT_DIR[0]+"/*.jpg")
     
-    pbar = common_process(posetrack_obj, args, len(img_list))
-    
+    common_process(posetrack_obj, args)
+    pbar = tqdm(total=len(img_list))
+    pbar.set_description("Creating {} nds dataset: ".format(posetrack_obj.NAME))
+    for dirs in posetrack_obj.DATA_TYPE_LIST:
+        check_and_make_dir(os.path.join(args.output_path, posetrack_obj.NAME, posetrack_obj.OUTPUT_DIR, dirs))
+        
     pool = mp.Pool(args.n_proc)
     nds_data = list()
     call_back = lambda *args: func_callback(args, pbar, nds_data)

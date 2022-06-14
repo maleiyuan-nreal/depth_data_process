@@ -1,9 +1,10 @@
 import cv2
 import os
 import numpy as np
+import h5py
 
 
-def pretty_depth(depth_path):
+def pretty_depth(depth):
     """
     用PIL是无法读取uint16格式的数据的,详情见:
     https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
@@ -13,7 +14,6 @@ def pretty_depth(depth_path):
         uint16
     """
     
-    depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
     depth = np.clip(depth, 0, 2**16 - 1)
     
     depth_shape = depth.shape
@@ -26,8 +26,7 @@ def pretty_depth(depth_path):
     else:
         raise NotImplementedError
     uint16_depth = depth.astype(np.uint16)
-    
-    assert (depth == uint16_depth).all(), print(depth_path+" wrong!")
+    assert (depth == uint16_depth).all()
     assert uint16_depth.max() < 2**16
     assert uint16_depth.min() >= 0
     
@@ -40,7 +39,27 @@ def process_depth(args, ori_depth_path, ouput_depth_path):
     requirement: 单通道+uint16
     其他: 待扩展
     """
+    assert ori_depth_path.endswith("jpg") or ori_depth_path.endswith("png") or ori_depth_path.endswith("h5")
+    
     # 统一处理depth到uint16类型
-    uint16_depth = pretty_depth(ori_depth_path)
+    if ori_depth_path.endswith("jpg") or ori_depth_path.endswith("png"):
+        depth = cv2.imread(ori_depth_path, cv2.IMREAD_UNCHANGED)
+        output_depth = pretty_depth(depth)
+        # print(ori_depth_path)
+        # print(depth.shape, depth.dtype, output_depth.shape, output_depth.dtype)
+        
+    
+    if ori_depth_path.endswith("h5"):
+        hdf5_file_read = h5py.File(ori_depth_path,'r')
+        depth = hdf5_file_read.get('/depth')
+        
+        output_depth = np.array(depth)
+        hdf5_file_read.close()
+        
+        # if np.sum(depth > 1e-8) > 10:
+        #     depth[ depth > np.percentile(depth[depth > 1e-8], 98)] = 0
+        #     depth[ depth < np.percentile(depth[depth > 1e-8], 1)] = 0
+    
+    
     # 保存为png无损格式
-    cv2.imwrite(os.path.join(args.output_path, ouput_depth_path), uint16_depth)
+    cv2.imwrite(os.path.join(args.output_path, ouput_depth_path), output_depth)

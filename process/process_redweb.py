@@ -19,8 +19,13 @@ def process(args, func_core, func_callback):
     
     p = os.path.join(rw_obj.INPUT_DIR, rw_obj.NAME)
     img_list = glob.glob(p+"/"+rw_obj.SUB_INPUT_DIR[0]+"/*.jpg")
-    pbar = common_process(rw_obj, args, len(img_list))
     
+    common_process(rw_obj, args)
+    pbar = tqdm(total=len(img_list))
+    pbar.set_description("Creating {} nds dataset: ".format(rw_obj.NAME))
+    for dirs in rw_obj.DATA_TYPE_LIST:
+        check_and_make_dir(os.path.join(args.output_path, rw_obj.NAME, rw_obj.OUTPUT_DIR, dirs))
+        
     pool = mp.Pool(args.n_proc)
     nds_data = list()
     call_back = lambda *args: func_callback(args, pbar, nds_data)

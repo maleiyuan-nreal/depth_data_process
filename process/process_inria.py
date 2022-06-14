@@ -18,7 +18,12 @@ def process(args, func_core, func_callback):
     
     p = os.path.join(inria_obj.INPUT_DIR, inria_obj.NAME)
     img_list = glob.glob(p+"/"+inria_obj.SUB_INPUT_DIR[0]+"/*.jpg")
-    pbar = common_process(inria_obj, args, len(img_list))
+    common_process(inria_obj, args)
+    pbar = tqdm(total=len(img_list))
+    pbar.set_description("Creating {} nds dataset: ".format(inria_obj.NAME))
+    for dirs in inria_obj.DATA_TYPE_LIST:
+        check_and_make_dir(os.path.join(args.output_path, inria_obj.NAME, inria_obj.OUTPUT_DIR, dirs))
+        
     
     pool = mp.Pool(args.n_proc)
     nds_data = list()

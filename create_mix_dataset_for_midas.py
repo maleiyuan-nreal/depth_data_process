@@ -27,7 +27,10 @@ import numpy as np
 from bfuncs import (
     check_and_make_dir, get_file_name
 )
-from process import process_inria, process_nyuv2, process_posetrack, process_redweb
+from process import (
+    process_inria, process_nyuv2, 
+    process_posetrack, process_redweb, process_megadepth
+)
 from utils.process_segmentaion import process_segmentation
 from utils.process_depth import process_depth
 from utils.process_ori_image import process_ori_image
@@ -38,19 +41,23 @@ def collect_result(args, pbar, nds_data):
     pbar.update()
     nds_data.append(args[0])
 
+
 def func_core(task_info):
     path_dict, image_id, obj = task_info
     image = cv2.imread(path_dict["ori_images_path"])
 
     for data_type in obj.DATA_TYPE_LIST:
         if data_type == "depths":
-            process_depth(args, path_dict["ori_depths_path"], os.path.join(obj.NAME, path_dict["output_depths_path"]))
+            process_depth(args, path_dict["ori_depths_path"], os.path.join(
+                obj.NAME, path_dict["output_depths_path"]))
         elif data_type == "segmentations":
-            process_segmentation(args, path_dict["ori_segmentations_path"], os.path.join(obj.NAME, path_dict["output_segmentations_path"]))
+            process_segmentation(args, path_dict["ori_segmentations_path"], os.path.join(
+                obj.NAME, path_dict["output_segmentations_path"]))
         elif data_type == "images":
-            process_ori_image(args, path_dict["ori_images_path"], os.path.join(obj.NAME, path_dict["output_images_path"]))
+            process_ori_image(args, path_dict["ori_images_path"], os.path.join(
+                obj.NAME, path_dict["output_images_path"]))
         else:
-            raise NotImplementedError 
+            raise NotImplementedError
 
     nds_data_item = format_nds(image_id, image.shape, path_dict)
     return nds_data_item
@@ -68,6 +75,7 @@ def main(args):
     process_nyuv2.process(args, func_core, collect_result)
     process_posetrack.process(args, func_core, collect_result)
     process_redweb.process(args, func_core, collect_result)
+    process_megadepth.process(args, func_core, collect_result)
 
     time_end = time.time()
     time_cost = time_end - time_start
@@ -76,7 +84,8 @@ def main(args):
 
     logging.info("")
     logging.info("done")
-    logging.info(f"time_cost: {time_cost} s == {time_cost_min} m == {time_cost_hour} h")
+    logging.info(
+        f"time_cost: {time_cost} s == {time_cost_min} m == {time_cost_hour} h")
     logging.info("")
 
 

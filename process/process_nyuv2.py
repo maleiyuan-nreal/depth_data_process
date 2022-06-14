@@ -19,7 +19,12 @@ def process(args, func_core, func_callback):
     
     p = os.path.join(nyuv2_obj.INPUT_DIR, nyuv2_obj.NAME)
     img_list = glob.glob(p+"/"+nyuv2_obj.SUB_INPUT_DIR[0]+"/*.jpg")
-    pbar = common_process(nyuv2_obj, args, len(img_list))
+    # print(p+"/"+nyuv2_obj.SUB_INPUT_DIR[0]+"/*.jpg", len(img_list))
+    pbar = common_process(nyuv2_obj, args)
+    pbar = tqdm(total=len(img_list))
+    pbar.set_description("Creating {} nds dataset: ".format(nyuv2_obj.NAME))
+    for dirs in nyuv2_obj.DATA_TYPE_LIST:
+        check_and_make_dir(os.path.join(args.output_path, nyuv2_obj.NAME, nyuv2_obj.OUTPUT_DIR, dirs))
     
     pool = mp.Pool(args.n_proc)
     nds_data = list()
@@ -27,6 +32,9 @@ def process(args, func_core, func_callback):
     for image_id, ori_image_path in enumerate(img_list):
         path_dict = get_path(nyuv2_obj, ori_image_path)
         task_info = [path_dict, image_id, nyuv2_obj]
+        # print(path_dict)
+        # nds_data_item = func_core(task_info)
+        # call_back(args, pbar, nds_data_item)
         pool.apply_async(func_core, (task_info, ), callback=call_back)
 
     pool.close()
