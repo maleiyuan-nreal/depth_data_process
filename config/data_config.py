@@ -113,8 +113,21 @@ class TartanAir():
         self.SUB_INPUT_DIR = ["image_left", "depth_left"]
         self.DATA_TYPE_LIST = ["images", "depths"]
         assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
-        self.DPETH_SUFFIX = "h5"
+        self.DPETH_SUFFIX = "npy"
 
 
+class HRWSI():
+    def __init__(self, output_path) -> None:
+        self.NAME = "HR-WSI"
+        self.INPUT_DIR = "/data/lyma/"
+        self.NDS_FILE_NAME = os.path.join(
+            output_path, self.NAME, "annotation.nds")
+        self.OUTPUT_DIR = "data"
+        self.SUB_INPUT_DIR = ["imgs", "gts"]
+        self.DATA_TYPE_LIST = ["images", "depths"]
+        assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
+        self.DPETH_SUFFIX = "png"
+        
+        
 if __name__ == "__main__":
     inria_obj = INRIA(".")

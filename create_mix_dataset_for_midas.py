@@ -28,8 +28,9 @@ from bfuncs import (
     check_and_make_dir, get_file_name
 )
 from process import (
-    process_inria, process_nyuv2, 
-    process_posetrack, process_redweb, process_megadepth
+    process_inria, process_nyuv2, process_hrwsi,
+    process_posetrack, process_redweb, process_megadepth,
+    process_tartanair
 )
 from utils.process_segmentaion import process_segmentation
 from utils.process_depth import process_depth
@@ -76,6 +77,8 @@ def main(args):
     process_posetrack.process(args, func_core, collect_result)
     process_redweb.process(args, func_core, collect_result)
     process_megadepth.process(args, func_core, collect_result)
+    process_hrwsi.process(args, func_core, collect_result)
+    process_tartanair.process(args, func_core, collect_result)
 
     time_end = time.time()
     time_cost = time_end - time_start

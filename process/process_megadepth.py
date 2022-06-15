@@ -22,17 +22,18 @@ def process(args, func_core, func_callback):
     megadepth_obj = MegaDepth(args.output_path)
     common_process(megadepth_obj, args)
     p = os.path.join(megadepth_obj.INPUT_DIR, megadepth_obj.NAME+"/*")
-    dir_num = 0
     sample_num = 0
 
     nds_file_list = list()
-    for d in glob.glob(p):
+    for dir_num, d in enumerate(glob.glob(p)):
         for sub_d in glob.glob(d+"/*"):
             depth_list = glob.glob(sub_d+"/depths/*.h5")
             rel_sub_d = os.path.relpath(sub_d, os.path.join(
                 megadepth_obj.INPUT_DIR, megadepth_obj.NAME))
             sub_nds_file = os.path.join(
                 args.output_path, megadepth_obj.NAME, megadepth_obj.OUTPUT_DIR, rel_sub_d, "annotation.nds")
+            if os.path.exists(sub_nds_file):
+                os.remove(sub_nds_file)
             logging.info(f"sub_nds_file: {sub_nds_file}")
 
             pbar = tqdm(total=len(depth_list))
@@ -69,8 +70,7 @@ def process(args, func_core, func_callback):
                 logging.info("{} processed done! Total map {}, Missing {} dense map".format(
                     sub_d, len(depth_list), missing_depth_num))
 
-        dir_num += 1
         logging.info(
-            "Total dirs {}, currently {}/{}".format(len(glob.glob(p)), dir_num, len(glob.glob(p))))
+            "Total dirs {}, currently {}/{}".format(len(glob.glob(p)), dir_num+1, len(glob.glob(p))))
 
     mergeFiles(megadepth_obj, nds_file_list)

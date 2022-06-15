@@ -39,17 +39,14 @@ def process_depth(args, ori_depth_path, ouput_depth_path):
     requirement: 单通道+uint16
     其他: 待扩展
     """
-    assert ori_depth_path.endswith("jpg") or ori_depth_path.endswith("png") or ori_depth_path.endswith("h5")
     
     # 统一处理depth到uint16类型
     if ori_depth_path.endswith("jpg") or ori_depth_path.endswith("png"):
         depth = cv2.imread(ori_depth_path, cv2.IMREAD_UNCHANGED)
         output_depth = pretty_depth(depth)
-        # print(ori_depth_path)
-        # print(depth.shape, depth.dtype, output_depth.shape, output_depth.dtype)
         
     
-    if ori_depth_path.endswith("h5"):
+    elif ori_depth_path.endswith("h5"):
         hdf5_file_read = h5py.File(ori_depth_path,'r')
         depth = hdf5_file_read.get('/depth')
         
@@ -60,6 +57,10 @@ def process_depth(args, ori_depth_path, ouput_depth_path):
         #     depth[ depth > np.percentile(depth[depth > 1e-8], 98)] = 0
         #     depth[ depth < np.percentile(depth[depth > 1e-8], 1)] = 0
     
+    elif ori_depth_path.endswith("npy"):
+        output_depth = np.load(ori_depth_path)
     
+    else:
+        raise NotImplementedError
     # 保存为png无损格式
     cv2.imwrite(os.path.join(args.output_path, ouput_depth_path), output_depth)

@@ -33,10 +33,10 @@ def common_process(obj, args):
     
     return 
 
-def get_path(obj, ori_image_path):
+def get_path(obj, ori_image_path, sub_folder=None):
     """
     inria、nyuv2、posetrack 需要将depth的jpg图转换为png图
-    
+    HR-WSI 有train、val俩个sub_folder
     
     OUTPUT:
         输出的路径为保存相对路径
@@ -47,20 +47,30 @@ def get_path(obj, ori_image_path):
     path_dict = dict()
     path_dict["ori_images_path"] = ori_image_path
     image_name_only = get_file_name(ori_image_path)
+    if sub_folder:
+        output_root = os.path.join(obj.OUTPUT_DIR, sub_folder)
+        input_root = os.path.join(obj.INPUT_DIR, obj.NAME, sub_folder)
+    else:
+        output_root = obj.OUTPUT_DIR
+        input_root = os.path.join(obj.INPUT_DIR, obj.NAME)
+    
     for input_dir, data_type in zip(obj.SUB_INPUT_DIR, obj.DATA_TYPE_LIST):
         if data_type == "images":
-            path_dict["output_"+data_type+"_path"] = os.path.join(obj.OUTPUT_DIR, data_type, image_name_only)
+            path_dict["output_"+data_type+"_path"] = os.path.join(output_root, data_type, image_name_only)
         elif data_type == "depths":
             if obj.DPETH_SUFFIX == "jpg":
-                path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only)
+                path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only)
             elif obj.DPETH_SUFFIX == "png":
-                path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only.split(".")[0]+".png")
+                path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only.split(".")[0]+".png")
+            elif obj.DPETH_SUFFIX == "npy":
+                # tartanair的depth需要加
+                path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only.split(".")[0]+"_depth.npy")
             else:
                 raise NotImplementedError 
-            path_dict["output_"+data_type+"_path"] = os.path.join(obj.OUTPUT_DIR, data_type, image_name_only.split(".")[0]+".png")
+            path_dict["output_"+data_type+"_path"] = os.path.join(output_root, data_type, image_name_only.split(".")[0]+".png")
         elif data_type == "segmentations":
-            path_dict["ori_"+data_type+"_path"] = os.path.join(obj.INPUT_DIR, obj.NAME, input_dir, image_name_only.split(".")[0]+".png")
-            path_dict["output_"+data_type+"_path"] = os.path.join(obj.OUTPUT_DIR, data_type, image_name_only.split(".")[0]+".png")
+            path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only.split(".")[0]+".png")
+            path_dict["output_"+data_type+"_path"] = os.path.join(output_root, data_type, image_name_only.split(".")[0]+".png")
         else:
             raise Exception("Unknown data type: " + data_type) 
         
