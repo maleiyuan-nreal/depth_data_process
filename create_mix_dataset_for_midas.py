@@ -30,7 +30,7 @@ from bfuncs import (
 from process import (
     process_inria, process_nyuv2, process_hrwsi,
     process_posetrack, process_redweb, process_megadepth,
-    process_tartanair
+    process_tartanair, process_blendedmvs, process_irs
 )
 from utils.process_segmentaion import process_segmentation
 from utils.process_depth import process_depth
@@ -79,6 +79,9 @@ def main(args):
     process_megadepth.process(args, func_core, collect_result)
     process_hrwsi.process(args, func_core, collect_result)
     process_tartanair.process(args, func_core, collect_result)
+    process_blendedmvs.process(args, func_core, collect_result)
+    process_irs.process(args, func_core, collect_result)
+    
 
     time_end = time.time()
     time_cost = time_end - time_start

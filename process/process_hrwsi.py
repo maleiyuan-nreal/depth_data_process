@@ -17,13 +17,15 @@ from bfuncs import (
     save_json_items
 )
 from process.common_process import common_process, get_path
+from utils.merge_nds import mergeFiles
 
 
 def process(args, func_core, func_callback):
     hrwsi_obj = HRWSI(args.output_path)
     
     p = os.path.join(hrwsi_obj.INPUT_DIR, hrwsi_obj.NAME)
-    
+    sample_num = 0
+    nds_file_list = list()
     for split_type in ["train", "val"]:
         img_list = glob.glob(p+"/"+split_type+"/"+hrwsi_obj.SUB_INPUT_DIR[0]+"/*.jpg")
         pbar = common_process(hrwsi_obj, args)
@@ -40,9 +42,10 @@ def process(args, func_core, func_callback):
         pool = mp.Pool(args.n_proc)
         nds_data = list()
         call_back = lambda *args: func_callback(args, pbar, nds_data)
-        for image_id, ori_image_path in enumerate(img_list):
+        for _, ori_image_path in enumerate(img_list):
+            sample_num += 1
             path_dict = get_path(hrwsi_obj, ori_image_path, split_type)
-            task_info = [path_dict, image_id, hrwsi_obj]
+            task_info = [path_dict, sample_num, hrwsi_obj]
             # nds_data_item = func_core(task_info)
             # call_back(args, pbar, nds_data_item)
             pool.apply_async(func_core, (task_info, ), callback=call_back)
@@ -52,3 +55,7 @@ def process(args, func_core, func_callback):
         
         nds_data.sort(key=lambda x:x['image_id'])
         save_json_items(sub_nds_file, nds_data)
+        nds_file_list.append(sub_nds_file)
+    
+    mergeFiles(hrwsi_obj, nds_file_list)
+    logging.info("sub_nds_file merged!")

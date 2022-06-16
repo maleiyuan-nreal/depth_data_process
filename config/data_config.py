@@ -128,6 +128,45 @@ class HRWSI():
         assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
         self.DPETH_SUFFIX = "png"
         
+   
+class BlendedMVS():
+    def __init__(self, output_path) -> None:
+        self.NAME = "BlendedMVS"
+        self.INPUT_DIR = "/data/lyma/"
+        self.NDS_FILE_NAME = os.path.join(
+            output_path, self.NAME, "annotation.nds")
+        self.OUTPUT_DIR = "data"
+        self.SUB_INPUT_DIR = ["blended_images", "rendered_depth_maps"]
+        self.DATA_TYPE_LIST = ["images", "depths"]
+        assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
+        self.DPETH_SUFFIX = "pfm"
         
+
+class IRS():
+    def __init__(self, output_path) -> None:
+        self.NAME = "IRSDataset"
+        self.INPUT_DIR = "/data/lyma/"
+        self.NDS_FILE_NAME = os.path.join(
+            output_path, self.NAME, "annotation.nds")
+        self.OUTPUT_DIR = "data"
+        self.SUB_INPUT_DIR = ["", ""]
+        self.DATA_TYPE_LIST = ["images", "depths"]
+        assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
+        self.DPETH_SUFFIX = "exr"
+        
+
+class ApolloScape():
+    def __init__(self, output_path) -> None:
+        self.NAME = "apolloscape"
+        self.INPUT_DIR = "/data/lyma/"
+        self.NDS_FILE_NAME = os.path.join(
+            output_path, self.NAME, "annotation.nds")
+        self.OUTPUT_DIR = "data"
+        self.SUB_INPUT_DIR = ["camera_5", "disparity"]
+        self.DATA_TYPE_LIST = ["images", "depths"]
+        assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
+        self.DPETH_SUFFIX = "png"
+        
+                   
 if __name__ == "__main__":
     inria_obj = INRIA(".")

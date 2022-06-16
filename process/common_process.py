@@ -63,8 +63,11 @@ def get_path(obj, ori_image_path, sub_folder=None):
             elif obj.DPETH_SUFFIX == "png":
                 path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only.split(".")[0]+".png")
             elif obj.DPETH_SUFFIX == "npy":
-                # tartanair的depth需要加
+                # tartanair
                 path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only.split(".")[0]+"_depth.npy")
+            elif obj.DPETH_SUFFIX == "pfm":
+                # blendedmvs
+                path_dict["ori_"+data_type+"_path"] = os.path.join(input_root, input_dir, image_name_only.split(".")[0]+".pfm")
             else:
                 raise NotImplementedError 
             path_dict["output_"+data_type+"_path"] = os.path.join(output_root, data_type, image_name_only.split(".")[0]+".png")
