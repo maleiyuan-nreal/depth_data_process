@@ -9,14 +9,9 @@ Description: NDS data for depth estimation pipeline
 
 """
 import os
-import copy
 import time
-import shutil
-import json
-from tqdm import tqdm
 import logging
 import multiprocessing as mp
-import glob
 import argparse
 
 
@@ -27,11 +22,8 @@ import numpy as np
 from bfuncs import (
     check_and_make_dir, get_file_name
 )
-from process import (
-    process_inria, process_nyuv2, process_hrwsi,
-    process_posetrack, process_redweb, process_megadepth,
-    process_tartanair, process_blendedmvs, process_irs
-)
+
+from config.data_config import init_obj
 from utils.process_segmentaion import process_segmentation
 from utils.process_depth import process_depth
 from utils.process_ori_image import process_ori_image
@@ -72,16 +64,18 @@ def main(args):
     check_and_make_dir(args.output_path)
     logging.info(f"image_output_dir: {args.output_path}")
 
-    process_inria.process(args, func_core, collect_result)
-    process_nyuv2.process(args, func_core, collect_result)
-    process_posetrack.process(args, func_core, collect_result)
-    process_redweb.process(args, func_core, collect_result)
-    process_megadepth.process(args, func_core, collect_result)
-    process_hrwsi.process(args, func_core, collect_result)
-    process_tartanair.process(args, func_core, collect_result)
-    process_blendedmvs.process(args, func_core, collect_result)
-    process_irs.process(args, func_core, collect_result)
-    
+    obj_dict = init_obj(args.output_path)
+
+    if args.dataset != "ALL":
+        assert args.dataset in list(obj_dict.keys())
+        obj_dict[args.dataset].process(args, func_core, collect_result)
+    elif args.dataset == "ALL":
+        for dataset_name in list(obj_dict.keys()):
+            obj_dict[dataset_name].process(
+                obj_dict[args.dataset], args, func_core, collect_result)
+
+    else:
+        raise NotImplementedError
 
     time_end = time.time()
     time_cost = time_end - time_start
@@ -104,13 +98,20 @@ if __name__ == "__main__":
                         )
 
     parser.add_argument('-n', '--n_proc',
-                        default=20,
+                        default=30,
                         type=int,
                         help='mp process number'
                         )
+
+    parser.add_argument('-d', '--dataset',
+                        default="ALL",
+                        help='choose dataset name to process, default way is process all dataset'
+                        )
+
     args = parser.parse_args()
 
-    logging.basicConfig(filename="log/track.log", format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
+    log_filename = "log/track_{}.log".format(args.dataset)
+    logging.basicConfig(filename=log_filename, format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                         datefmt="%d-%m-%Y %H:%M:%S", level=logging.DEBUG)
 
     main(args)

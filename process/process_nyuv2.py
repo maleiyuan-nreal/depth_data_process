@@ -5,40 +5,51 @@ import multiprocessing as mp
 from tqdm import tqdm
 
 
-from config.data_config import NYUV2
 from bfuncs import (
     check_and_make_dir, check_and_make_dir_for_file,
     load_json_items, check_and_make_dir,
     save_json_items
 )
-from process.common_process import common_process, get_path
+from process.common_process import get_path, Base_Data
 
 
-def process(args, func_core, func_callback):
-    nyuv2_obj = NYUV2(args.output_path)
-    
-    p = os.path.join(nyuv2_obj.INPUT_DIR, nyuv2_obj.NAME)
-    img_list = glob.glob(p+"/"+nyuv2_obj.SUB_INPUT_DIR[0]+"/*.jpg")
-    # print(p+"/"+nyuv2_obj.SUB_INPUT_DIR[0]+"/*.jpg", len(img_list))
-    pbar = common_process(nyuv2_obj, args)
-    pbar = tqdm(total=len(img_list))
-    pbar.set_description("Creating {} nds dataset: ".format(nyuv2_obj.NAME))
-    for dirs in nyuv2_obj.DATA_TYPE_LIST:
-        check_and_make_dir(os.path.join(args.output_path, nyuv2_obj.NAME, nyuv2_obj.OUTPUT_DIR, dirs))
-    
-    pool = mp.Pool(args.n_proc)
-    nds_data = list()
-    call_back = lambda *args: func_callback(args, pbar, nds_data)
-    for image_id, ori_image_path in enumerate(img_list):
-        path_dict = get_path(nyuv2_obj, ori_image_path)
-        task_info = [path_dict, image_id, nyuv2_obj]
-        # print(path_dict)
-        # nds_data_item = func_core(task_info)
-        # call_back(args, pbar, nds_data_item)
-        pool.apply_async(func_core, (task_info, ), callback=call_back)
+class NYUV2(Base_Data):
+    def __init__(self, output_path) -> None:
+        self.NAME = "nyuv2"
+        self.INPUT_DIR = "/home/lyma/FOD/FocusOnDepth/datasets"
+        self.NDS_FILE_NAME = os.path.join(
+            output_path, self.NAME, "annotation.nds")
+        self.OUTPUT_DIR = "data"
+        self.SUB_INPUT_DIR = ["images", "depths", "segmentations"]
+        self.DATA_TYPE_LIST = ["images", "depths", "segmentations"]
+        assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
+        self.DPETH_SUFFIX = "jpg"
+        self.IMAGE_SUFFIX = "jpg"
 
-    pool.close()
-    pool.join()
-    
-    nds_data.sort(key=lambda x:x['image_id'])
-    save_json_items(nyuv2_obj.NDS_FILE_NAME, nds_data)
+    def process(self, args, func_core, func_callback):
+
+        p = os.path.join(self.INPUT_DIR, self.NAME)
+        img_list = glob.glob(p+"/"+self.SUB_INPUT_DIR[0]+"/*.jpg")
+        self.common_process(args)
+        pbar = tqdm(total=len(img_list))
+        pbar.set_description("Creating {} nds dataset: ".format(self.NAME))
+        for dirs in self.DATA_TYPE_LIST:
+            check_and_make_dir(os.path.join(
+                args.output_path, self.NAME, self.OUTPUT_DIR, dirs))
+
+        pool = mp.Pool(args.n_proc)
+        nds_data = list()
+        call_back = lambda *args: func_callback(args, pbar, nds_data)
+        for image_id, ori_image_path in enumerate(img_list):
+            path_dict = get_path(self, ori_image_path)
+            task_info = [path_dict, image_id, self]
+            # print(path_dict)
+            # nds_data_item = func_core(task_info)
+            # call_back(args, pbar, nds_data_item)
+            pool.apply_async(func_core, (task_info, ), callback=call_back)
+
+        pool.close()
+        pool.join()
+
+        nds_data.sort(key=lambda x: x['image_id'])
+        save_json_items(self.NDS_FILE_NAME, nds_data)

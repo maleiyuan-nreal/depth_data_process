@@ -7,70 +7,81 @@ import glob
 import logging
 import multiprocessing as mp
 from tqdm import tqdm
+import numpy as np
 
 
-from config.data_config import MegaDepth
 from bfuncs import (
-    check_and_make_dir, check_and_make_dir_for_file,
-    load_json_items, get_file_name, save_json_items
+    check_and_make_dir, save_json_items
 )
-from process.common_process import common_process, get_path, get_path_by_depth
-from utils.merge_nds import mergeFiles
+from process.common_process import Base_Data, get_path_by_depth
 
 
-def process(args, func_core, func_callback):
-    megadepth_obj = MegaDepth(args.output_path)
-    common_process(megadepth_obj, args)
-    p = os.path.join(megadepth_obj.INPUT_DIR, megadepth_obj.NAME+"/*")
-    sample_num = 0
+class MegaDepth(Base_Data):
+    def __init__(self, output_path) -> None:
+        super().__init__()
+        self.NAME = "MegaDepth_v1"
+        self.INPUT_DIR = "/home/lyma/SHARE_DATA/datadepth/MegaDepth/"
+        self.NDS_FILE_NAME = os.path.join(
+            output_path, self.NAME, "annotation.nds")
+        self.OUTPUT_DIR = "data"
+        self.SUB_INPUT_DIR = ["imgs", "depths"]
+        self.DATA_TYPE_LIST = ["images", "depths"]
+        assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
+        self.DPETH_SUFFIX = "h5"
+        self.IMAGE_SUFFIX = "jpg"
 
-    nds_file_list = list()
-    for dir_num, d in enumerate(glob.glob(p)):
-        for sub_d in glob.glob(d+"/*"):
-            depth_list = glob.glob(sub_d+"/depths/*.h5")
-            rel_sub_d = os.path.relpath(sub_d, os.path.join(
-                megadepth_obj.INPUT_DIR, megadepth_obj.NAME))
-            sub_nds_file = os.path.join(
-                args.output_path, megadepth_obj.NAME, megadepth_obj.OUTPUT_DIR, rel_sub_d, "annotation.nds")
-            if os.path.exists(sub_nds_file):
-                os.remove(sub_nds_file)
-            logging.info(f"sub_nds_file: {sub_nds_file}")
+    def process(self, args, func_core, func_callback):
+        self.common_process(args)
 
-            pbar = tqdm(total=len(depth_list))
-            pbar.set_description("Creating {} nds dataset: ".format(rel_sub_d))
+        orientation_list = ["landscape", "portrait"]
+        whole_img_list = list()
+        whole_depth_list = list()
+        for orientation in orientation_list:
+            logging.info("{} loaded!".format(orientation))
+            dir_load_all_img = self.INPUT_DIR + \
+                "/train_val_list/" + orientation + "/imgs_MD.p"
+            dir_load_all_target = self.INPUT_DIR + \
+                "/train_val_list/" + orientation + "/targets_MD.p"
 
-            for dirs in megadepth_obj.DATA_TYPE_LIST:
+            img_list = np.load(dir_load_all_img, allow_pickle=True)
+            target_list = np.load(dir_load_all_target, allow_pickle=True)
+            whole_img_list.extend(img_list)
+            whole_depth_list.extend(target_list)
+
+        pbar = tqdm(total=len(whole_depth_list))
+        pbar.set_description(
+            "Creating {} nds dataset: ".format(self.NAME))
+
+        sample_num = 0
+        missing_depth_num = 0
+
+        pool = mp.Pool(args.n_proc)
+        nds_data = list()
+        call_back = lambda *args: func_callback(args, pbar, nds_data)
+        for img_path, target_path in zip(whole_img_list, whole_depth_list):
+            rel_sub_d = os.path.dirname(os.path.dirname(target_path))
+            for dirs in self.DATA_TYPE_LIST:
                 check_and_make_dir(os.path.join(
-                    args.output_path, megadepth_obj.NAME, megadepth_obj.OUTPUT_DIR, rel_sub_d, dirs))
-
-            pool = mp.Pool(args.n_proc)
-            nds_data = list()
-            call_back = lambda *args: func_callback(args, pbar, nds_data)
-            missing_depth_num = 0
-            for _, ori_depth_path in enumerate(depth_list):
-                path_dict = get_path_by_depth(megadepth_obj, ori_depth_path)
-                if not path_dict:
-                    missing_depth_num += 1
-                    continue
+                    args.output_path, self.NAME, self.OUTPUT_DIR, rel_sub_d, dirs))
+            ori_depth_path = os.path.join(
+                self.INPUT_DIR, self.NAME, target_path)
+            path_dict = get_path_by_depth(self, ori_depth_path)
+            if not path_dict:
                 sample_num += 1
-                task_info = [path_dict, sample_num, megadepth_obj]
-                # nds_data_item = func_core(task_info)
-                # call_back(args, pbar, nds_data_item)
-                pool.apply_async(func_core, (task_info, ), callback=call_back)
+                missing_depth_num += 1
+                continue
+            task_info = [path_dict, sample_num, self]
+            sample_num += 1
+            # nds_data_item = func_core(task_info)
+            # call_back(nds_data_item, pbar, nds_data)
+            # print(nds_data)
+            pool.apply_async(func_core, (task_info, ), callback=call_back)
+        pool.close()
+        pool.join()
 
-            pool.close()
-            pool.join()
-
-            nds_data.sort(key=lambda x: x['image_id'])
-            save_json_items(sub_nds_file, nds_data)
-            nds_file_list.append(sub_nds_file)
-
-            if missing_depth_num > 0:
-                assert missing_depth_num + len(nds_data) == len(depth_list)
-                logging.info("{} processed done! Total map {}, Missing {} dense map".format(
-                    sub_d, len(depth_list), missing_depth_num))
-
-        logging.info(
-            "Total dirs {}, currently {}/{}".format(len(glob.glob(p)), dir_num+1, len(glob.glob(p))))
-
-    mergeFiles(megadepth_obj, nds_file_list)
+        if missing_depth_num > 0:
+            assert missing_depth_num + len(nds_data) == len(whole_depth_list)
+            logging.info("processed done! Total map {}, Missing {} dense map".format(
+                len(whole_depth_list), missing_depth_num))
+        nds_data.sort(key=lambda x: x['image_id'])
+        save_json_items(self.NDS_FILE_NAME, nds_data)

@@ -1,26 +1,17 @@
 import os
 
 
-def mergeFiles(obj, fileList: list) -> str:
-    """
+from bfuncs import (
+    check_and_make_dir, check_and_make_dir_for_file,
+    load_json_items, get_file_name, save_json_items
+)
 
-    :param fileList: a list of file absolute path
-    :return: a string of merged file absolute path
-    """
-    fs = [open(file_, 'r') for file_ in fileList]
-    tempDict = {}
-    mergedFile = open(obj.NDS_FILE_NAME, 'a')
-    for f in fs:
-        initLine = f.readline()
-        if initLine:
-            tempDict[f] = initLine
-    while tempDict:
-        min_item = min(tempDict.items(), key=lambda x: x[1])
-        mergedFile.write(min_item[1])
-        nextLine = min_item[0].readline()
-        if nextLine:
-            tempDict[min_item[0]] = nextLine
-        else:
-            del tempDict[min_item[0]]
-            min_item[0].close()
-    mergedFile.close()
+
+def mergeFiles(obj, fileList: list):
+    
+    res_items = []
+    
+    for filePath in fileList:
+        res_items.extend(load_json_items(filePath))
+        
+    save_json_items(obj.NDS_FILE_NAME, res_items)
