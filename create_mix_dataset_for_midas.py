@@ -41,8 +41,13 @@ def func_core(task_info):
 
     for data_type in obj.DATA_TYPE_LIST:
         if data_type == "depths":
-            process_depth(args, path_dict["ori_depths_path"], os.path.join(
-                obj.NAME, path_dict["output_depths_path"]))
+            if "valid_masks_path" in path_dict:
+                process_depth(args, path_dict["ori_depths_path"], os.path.join(
+                    obj.NAME, path_dict["output_depths_path"]),
+                    os.path.join(obj.NAME, path_dict["valid_masks_path"]))
+            else:
+                process_depth(args, path_dict["ori_depths_path"], os.path.join(
+                    obj.NAME, path_dict["output_depths_path"]), "")
         elif data_type == "segmentations":
             process_segmentation(args, path_dict["ori_segmentations_path"], os.path.join(
                 obj.NAME, path_dict["output_segmentations_path"]))

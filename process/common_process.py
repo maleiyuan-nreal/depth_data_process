@@ -48,7 +48,7 @@ class Base_Data(object):
 def get_path(obj, ori_image_path, sub_folder=None):
     """
     inria、nyuv2、posetrack 需要将depth的jpg图转换为png图
-    HR-WSI 有train、val俩个sub_folder
+    HR-WSI 有train、val俩个sub_folder, 需要处理valid_mask
     
     OUTPUT:
         输出的路径为保存相对路径

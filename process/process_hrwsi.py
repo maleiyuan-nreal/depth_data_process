@@ -11,9 +11,8 @@ from tqdm import tqdm
 
 
 from bfuncs import (
-    check_and_make_dir, check_and_make_dir_for_file,
-    load_json_items, check_and_make_dir,
-    save_json_items
+    check_and_make_dir, check_and_make_dir,
+    save_json_items, get_file_name
 )
 from process.common_process import Base_Data, get_path
 from utils.merge_nds import mergeFiles
@@ -22,7 +21,7 @@ from utils.merge_nds import mergeFiles
 class HRWSI(Base_Data):
     def __init__(self, output_path) -> None:
         self.NAME = "HR-WSI"
-        self.INPUT_DIR = "/data/lyma/"
+        self.INPUT_DIR = "/home/lyma/SHARE_DATA/datadepth"
         self.NDS_FILE_NAME = os.path.join(
             output_path, self.NAME, "annotation.nds")
         self.OUTPUT_DIR = "data"
@@ -56,6 +55,7 @@ class HRWSI(Base_Data):
             call_back = lambda *args: func_callback(args, pbar, nds_data)
             for _, ori_image_path in enumerate(img_list):
                 path_dict = get_path(self, ori_image_path, split_type)
+                path_dict["valid_masks_path"] = os.path.join(self.INPUT_DIR, self.NAME, split_type, "valid_masks", get_file_name(ori_image_path).split(".")[0]+".png")
                 task_info = [path_dict, sample_num, self]
                 sample_num += 1
                 # nds_data_item = func_core(task_info)
