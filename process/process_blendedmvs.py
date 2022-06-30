@@ -50,7 +50,7 @@ class BlendedMVS(Base_Data):
     def process(self, args, func_callback):
         self.common_process(args)
         p = os.path.join(self.INPUT_DIR, self.NAME+"/high_res/*")
-        dir_list = glob.glob(p)[2:]
+        dir_list = glob.glob(p)
         sample_num = 0
         nds_file_list = list()
         for dir_num, d in enumerate(dir_list):
@@ -77,8 +77,8 @@ class BlendedMVS(Base_Data):
                 for _, ori_image_path in enumerate(img_list):
                     path_dict = self.get_path(ori_image_path, rel_sub_d)
                     intrinsic = self.get_intrinsic(ori_image_path)
-                    sample_num += 1
                     task_info = [args, intrinsic, path_dict, sample_num]
+                    sample_num += 1
                     # self.data_2_nreal_core(args, intrinsic, path_dict, sample_num)
                     # nds_data_item = func_core(task_info)
                     # call_back(args, pbar, nds_data_item)
