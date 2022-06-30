@@ -9,11 +9,9 @@ from tqdm import tqdm
 
 
 from bfuncs import (
-    check_and_make_dir, check_and_make_dir_for_file,
-    load_json_items, get_file_name, save_json_items
+    check_and_make_dir, save_json_items
 )
-from process.common_process import Base_Data, get_path, get_path_by_depth
-from utils.merge_nds import mergeFiles
+from process.common_process import Base_Data
 
 
 class ApolloScape(Base_Data):
@@ -55,7 +53,7 @@ class ApolloScape(Base_Data):
             nds_data = list()
             call_back = lambda *args: func_callback(args, pbar, nds_data)
             for _, ori_image_path in enumerate(img_list):
-                path_dict = get_path(self, ori_image_path, rel_sub_d)
+                path_dict = self.get_path(ori_image_path, rel_sub_d)
                 task_info = [path_dict, sample_num, self]
                 sample_num += 1
                 # nds_data_item = func_core(task_info)

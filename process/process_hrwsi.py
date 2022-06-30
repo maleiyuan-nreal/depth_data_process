@@ -14,8 +14,7 @@ from bfuncs import (
     check_and_make_dir, check_and_make_dir,
     save_json_items, get_file_name
 )
-from process.common_process import Base_Data, get_path
-from utils.merge_nds import mergeFiles
+from process.common_process import Base_Data
 
 
 class HRWSI(Base_Data):
@@ -31,7 +30,7 @@ class HRWSI(Base_Data):
         self.DPETH_SUFFIX = "png"
         self.IMAGE_SUFFIX = "jpg"
 
-    def process(self, args, func_core, func_callback):
+    def process(self, args, func_callback):
         self.common_process(args)
         p = os.path.join(self.INPUT_DIR, self.NAME)
         sample_num = 0
@@ -54,13 +53,13 @@ class HRWSI(Base_Data):
             nds_data = list()
             call_back = lambda *args: func_callback(args, pbar, nds_data)
             for _, ori_image_path in enumerate(img_list):
-                path_dict = get_path(self, ori_image_path, split_type)
+                path_dict = self.get_path(ori_image_path, split_type)
                 path_dict["valid_masks_path"] = os.path.join(self.INPUT_DIR, self.NAME, split_type, "valid_masks", get_file_name(ori_image_path).split(".")[0]+".png")
-                task_info = [path_dict, sample_num, self]
+                task_info = [args, path_dict, sample_num, self]
                 sample_num += 1
                 # nds_data_item = func_core(task_info)
                 # call_back(args, pbar, nds_data_item)
-                pool.apply_async(func_core, (task_info, ), callback=call_back)
+                pool.apply_async(self.func_core, (task_info, ), callback=call_back)
 
             pool.close()
             pool.join()

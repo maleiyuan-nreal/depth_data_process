@@ -28,6 +28,11 @@
     python create_mix_dataset_for_midas.py -o PATH
 
 ```
+## data_2_nreal transfer
+```
+    python create_mix_dataset_for_midas.py -o PATH -d BlendedMVS --transform
+
+```
 
 
   

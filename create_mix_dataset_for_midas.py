@@ -20,12 +20,12 @@ import numpy as np
 
 
 from bfuncs import (
-    check_and_make_dir, get_file_name
+    check_and_make_dir
 )
 
 from config.data_config import init_obj
 from utils.process_segmentaion import process_segmentation
-from utils.process_depth import process_depth
+from utils.process_depth import process_depth, load_pfm
 from utils.process_ori_image import process_ori_image
 from utils.format_nds import format_nds
 
@@ -73,7 +73,7 @@ def main(args):
 
     if args.dataset != "ALL":
         assert args.dataset in list(obj_dict.keys())
-        obj_dict[args.dataset].process(args, func_core, collect_result)
+        obj_dict[args.dataset].process(args, collect_result)
     elif args.dataset == "ALL":
         for dataset_name in list(obj_dict.keys()):
             obj_dict[dataset_name].process(
@@ -113,6 +113,11 @@ if __name__ == "__main__":
                         help='choose dataset name to process, default way is process all dataset'
                         )
 
+    parser.add_argument('-t', '--transform',
+                        action="store_true",
+                        help='transform open dataset to nreal glass'
+                        )
+    
     args = parser.parse_args()
 
     log_filename = "log/track_{}.log".format(args.dataset)

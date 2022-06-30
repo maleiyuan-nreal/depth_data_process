@@ -6,11 +6,10 @@ from tqdm import tqdm
 
 
 from bfuncs import (
-    check_and_make_dir, check_and_make_dir_for_file,
-    load_json_items, check_and_make_dir,
+    check_and_make_dir, check_and_make_dir,
     save_json_items
 )
-from process.common_process import Base_Data, get_path
+from process.common_process import Base_Data
 
 
 class ReDWeb(Base_Data):
@@ -42,9 +41,9 @@ class ReDWeb(Base_Data):
         nds_data = list()
         call_back = lambda *args: func_callback(args, pbar, nds_data)
         for image_id, ori_image_path in enumerate(img_list):
-            path_dict = get_path(self, ori_image_path)
-            task_info = [path_dict, image_id, self]
-            pool.apply_async(func_core, (task_info, ), callback=call_back)
+            path_dict = self.get_path(ori_image_path)
+            task_info = [args, path_dict, image_id]
+            pool.apply_async(self,func_core, (task_info, ), callback=call_back)
 
         pool.close()
         pool.join()

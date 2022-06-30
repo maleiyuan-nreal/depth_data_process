@@ -7,12 +7,11 @@ import logging
 import multiprocessing as mp
 from tqdm import tqdm
 
-
+import numpy as np
 from bfuncs import (
     check_and_make_dir, save_json_items
 )
-from process.common_process import Base_Data, get_path, get_path_by_depth
-from utils.merge_nds import mergeFiles
+from process.common_process import Base_Data
 
 
 class TartanAir(Base_Data):
@@ -27,8 +26,11 @@ class TartanAir(Base_Data):
         assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
         self.DPETH_SUFFIX = "npy"
         self.IMAGE_SUFFIX = "png"
+        self.K = np.float32([[320,  0., 320],
+                            [0.,  320, 240],
+                            [0.,  0.,  1.]])
 
-    def process(self, args, func_core, func_callback):
+    def process(self, args, func_callback):
         self.common_process(args)
         p = os.path.join(self.INPUT_DIR, self.NAME+"/*/Easy")
         dir_list = glob.glob(p)
@@ -55,13 +57,12 @@ class TartanAir(Base_Data):
                 nds_data = list()
                 call_back = lambda *args: func_callback(args, pbar, nds_data)
                 for _, ori_image_path in enumerate(img_list):
-                    path_dict = get_path(self, ori_image_path, rel_sub_d)
-                    task_info = [path_dict, sample_num, self]
+                    path_dict = self.get_path(ori_image_path, rel_sub_d)
+                    task_info = [args, self.K, path_dict, sample_num]
                     sample_num += 1
                     # print(path_dict)
                     # nds_data_item = func_core(task_info)
-                    # call_back(args, pbar, nds_data_item)
-                    pool.apply_async(func_core, (task_info, ),
+                    pool.apply_async(self.data_2_nreal_core, (task_info, ),
                                      callback=call_back)
 
                 pool.close()
