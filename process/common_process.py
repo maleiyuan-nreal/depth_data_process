@@ -8,15 +8,11 @@ import cv2
 
 
 from bfuncs import (
-    check_and_make_dir, get_file_name, save_json_items, load_json_items,
-    SE3, project_depth_image_to_point_cloud, project_poind_cloud_to_depth_image
+    check_and_make_dir, get_file_name, save_json_items, load_json_items
 )
-from config import nreal_param
 from utils.process_segmentaion import process_segmentation
-from utils.process_depth import process_depth, load_pfm
+from utils.process_depth import process_depth
 from utils.process_ori_image import process_ori_image
-from utils.process_depth import load_pfm, load_exr
-from utils.transform_rgb import get_transform_matrix, transform_rgb
 from utils.format_nds import format_nds
 
 
@@ -52,7 +48,6 @@ class Base_Data(object):
 
         save_json_items(self.NDS_FILE_NAME, res_items)
 
-
     def get_path(self, ori_image_path, sub_folder=None):
         """
         inria、nyuv2、posetrack 需要将depth的jpg图转换为png图
@@ -77,11 +72,11 @@ class Base_Data(object):
         for input_dir, data_type in zip(self.SUB_INPUT_DIR, self.DATA_TYPE_LIST):
             if data_type == "images":
                 path_dict["output_"+data_type +
-                        "_path"] = os.path.join(output_root, data_type, image_name_only)
+                          "_path"] = os.path.join(output_root, data_type, image_name_only)
             elif data_type == "depths":
                 if self.DPETH_SUFFIX == "jpg":
                     path_dict["ori_"+data_type +
-                            "_path"] = os.path.join(input_root, input_dir, image_name_only)
+                              "_path"] = os.path.join(input_root, input_dir, image_name_only)
                 elif self.DPETH_SUFFIX == "png":
                     path_dict["ori_"+data_type+"_path"] = os.path.join(
                         input_root, input_dir, image_name_only.split(".")[0]+".png")
@@ -132,30 +127,21 @@ class Base_Data(object):
         return nds_data_item
 
     def data_2_nreal_core(self, task_info):
-        args, intrinsic, path_dict, image_id = task_info
-        image = cv2.imread(path_dict["ori_images_path"])
-        if args.dataset in ["tartanair", "BlendedMVS"]: 
-            ori_depth_path = path_dict["ori_depths_path"]    
-            if ori_depth_path.endswith("npy"):
-                output_depth = np.load(ori_depth_path)
+        args, image, output_depth, map1_x, map1_y, path_dict, image_id = task_info
+        depth_trans = cv2.remap(output_depth, map1_x, map1_y,
+                                interpolation=cv2.INTER_NEAREST,
+                                borderMode=cv2.BORDER_CONSTANT,
+                                borderValue=(0, 0, 0, 0))
+        cv2.imwrite(os.path.join(args.output_path,
+                                    self.NAME, path_dict["output_depths_path"]), depth_trans)
 
-            elif ori_depth_path.endswith("pfm"):
-                output_depth = load_pfm(open(ori_depth_path, 'rb')) 
-            else:
-                raise NotImplementedError          
-            xyz_undistorted = project_depth_image_to_point_cloud(output_depth, intrinsic)
-            nreal_left_depth_img_withoutdist = project_poind_cloud_to_depth_image(xyz_undistorted, K_depth=nreal_param.nreal_left_K, distCoeffs_depth=np.zeros(8),
-                        target_image_shape=(nreal_param.nreal_row, nreal_param.nreal_col), interpolation_mode="nearest_neighbour")
-            cv2.imwrite(os.path.join(args.output_path,
-                self.NAME, path_dict["output_depths_path"]), nreal_left_depth_img_withoutdist)
-            
-            
-            image = cv2.imread(path_dict["ori_images_path"])
-            transform_matrix = get_transform_matrix(nreal_param.nreal_left_K, intrinsic)
-            nreal_left_projected_image = transform_rgb(image, transform_matrix)
-            cv2.imwrite(os.path.join(args.output_path,
-                self.NAME, path_dict["output_images_path"]), nreal_left_projected_image)
-                
+        rgb_trans = cv2.remap(image, map1_x, map1_y,
+                                interpolation=cv2.INTER_NEAREST,
+                                borderMode=cv2.BORDER_CONSTANT,
+                                borderValue=(0, 0, 0, 0))
+        cv2.imwrite(os.path.join(args.output_path,
+                                    self.NAME, path_dict["output_images_path"]), rgb_trans)
+
         nds_data_item = format_nds(image_id, image.shape, path_dict)
         return nds_data_item
 

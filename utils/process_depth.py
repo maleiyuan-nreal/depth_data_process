@@ -141,9 +141,8 @@ def process_depth(args, ori_depth_path, ouput_depth_path, mask_path):
 
     elif ori_depth_path.endswith("npy"):
         output_depth = np.load(ori_depth_path)
-
-    elif ori_depth_path.endswith("pfm"):
-        output_depth = load_pfm(open(ori_depth_path, 'rb'))
+        output_depth = np.clip(output_depth, 0, 50)
+        output_depth = (output_depth * 1000).astype("uint16")
 
     elif ori_depth_path.endswith("exr"):
         output_depth = load_exr(ori_depth_path)

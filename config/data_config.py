@@ -41,7 +41,9 @@ from process.process_redweb import ReDWeb
 from process.process_tartanair import TartanAir
 
 
-def init_obj(output_path):
+def init_obj(args):
+    output_path = args.output_path
+    transform_flag = args.transform
     obj_dict = dict()
 
     inria_obj = INRIA(output_path)
@@ -50,10 +52,10 @@ def init_obj(output_path):
 
     megadepth_obj = MegaDepth(output_path)
     rw_obj = ReDWeb(output_path)
-    blendedmvs_obj = BlendedMVS(output_path)
+    blendedmvs_obj = BlendedMVS(output_path, transform_flag)
     apollospace_obj = ApolloScape(output_path)
     hrwsi_obj = HRWSI(output_path)
-    tartanair_obj = TartanAir(output_path)
+    tartanair_obj = TartanAir(output_path, transform_flag)
     irs_obj = IRS(output_path)
 
     for obj in [blendedmvs_obj, apollospace_obj, tartanair_obj, hrwsi_obj,

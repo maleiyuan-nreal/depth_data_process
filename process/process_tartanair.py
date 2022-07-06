@@ -7,20 +7,27 @@ import logging
 import multiprocessing as mp
 from tqdm import tqdm
 
+import cv2
 import numpy as np
 from bfuncs import (
     check_and_make_dir, save_json_items
 )
 from process.common_process import Base_Data
+from config import nreal_param
 
 
 class TartanAir(Base_Data):
-    def __init__(self, output_path) -> None:
+    def __init__(self, output_path, transform_flag) -> None:
         self.NAME = "tartanair"
         self.INPUT_DIR = "/data/lyma/"
-        self.NDS_FILE_NAME = os.path.join(
-            output_path, self.NAME, "annotation.nds")
-        self.OUTPUT_DIR = "data"
+        if transform_flag:
+            self.NDS_FILE_NAME = os.path.join(
+                output_path, self.NAME, "annotation_to_nreal.nds")
+            self.OUTPUT_DIR = "data_2_nreal" if transform_flag else "data"
+        else:
+            self.NDS_FILE_NAME = os.path.join(
+                output_path, self.NAME, "annotation.nds")
+            self.OUTPUT_DIR = "data"
         self.SUB_INPUT_DIR = ["image_left", "depth_left"]
         self.DATA_TYPE_LIST = ["images", "depths"]
         assert len(self.SUB_INPUT_DIR) == len(self.DATA_TYPE_LIST)
@@ -36,6 +43,9 @@ class TartanAir(Base_Data):
         dir_list = glob.glob(p)
         nds_file_list = list()
         sample_num = 0
+        if args.transform:
+            map1_x, map1_y = cv2.initUndistortRectifyMap(cameraMatrix=self.K, distCoeffs=None, R=None, newCameraMatrix=nreal_param.nreal_left_K, size=(
+                nreal_param.nreal_col, nreal_param.nreal_row), m1type=cv2.CV_32FC1)
         for dir_num, d in enumerate(dir_list):
             for sub_d in glob.glob(d+"/P*"):
                 img_list = glob.glob(sub_d+"/image_left/*")
@@ -58,12 +68,18 @@ class TartanAir(Base_Data):
                 call_back = lambda *args: func_callback(args, pbar, nds_data)
                 for _, ori_image_path in enumerate(img_list):
                     path_dict = self.get_path(ori_image_path, rel_sub_d)
-                    task_info = [args, self.K, path_dict, sample_num]
+                    if args.transform:
+                        task_info = [args, map1_x,
+                                     map1_y, path_dict, sample_num]
+                        # nds_data_item = self.tartanair_data_2_nreal_core(task_info)
+                        pool.apply_async(self.tartanair_data_2_nreal_core, (task_info, ),
+                                         callback=call_back)
+                    else:
+                        task_info = [args, path_dict, sample_num]
+                        # nds_data_item = self.func_core(task_info)
+                        pool.apply_async(self.func_core, (task_info, ),
+                                         callback=call_back)
                     sample_num += 1
-                    # print(path_dict)
-                    # nds_data_item = func_core(task_info)
-                    pool.apply_async(self.data_2_nreal_core, (task_info, ),
-                                     callback=call_back)
 
                 pool.close()
                 pool.join()
@@ -77,3 +93,16 @@ class TartanAir(Base_Data):
 
         self.mergeFiles(nds_file_list)
         logging.info("sub_nds_file merged!")
+
+    def tartanair_data_2_nreal_core(self, task_info):
+        args,  map1_x, map1_y, path_dict, image_id = task_info
+        image = cv2.imread(path_dict["ori_images_path"])
+        ori_depth_path = path_dict["ori_depths_path"]
+        output_depth = np.load(ori_depth_path)
+        output_depth = np.clip(output_depth, 0, 50)
+        output_depth = (output_depth * 1000).astype("uint16")
+
+        data_2_nreal_info = [args, image, output_depth,
+                             map1_x, map1_y, path_dict, image_id]
+        nds_data_item = self.data_2_nreal_core(data_2_nreal_info)
+        return nds_data_item

@@ -69,7 +69,7 @@ def main(args):
     check_and_make_dir(args.output_path)
     logging.info(f"image_output_dir: {args.output_path}")
 
-    obj_dict = init_obj(args.output_path)
+    obj_dict = init_obj(args)
 
     if args.dataset != "ALL":
         assert args.dataset in list(obj_dict.keys())
@@ -103,7 +103,7 @@ if __name__ == "__main__":
                         )
 
     parser.add_argument('-n', '--n_proc',
-                        default=30,
+                        default=20,
                         type=int,
                         help='mp process number'
                         )
@@ -120,7 +120,10 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    log_filename = "log/track_{}.log".format(args.dataset)
+    if args.transform:
+        log_filename = "log/track_{}_transform.log".format(args.dataset)
+    else:
+        log_filename = "log/track_{}.log".format(args.dataset)
     logging.basicConfig(filename=log_filename, format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                         datefmt="%d-%m-%Y %H:%M:%S", level=logging.DEBUG)
 
