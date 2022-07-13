@@ -1,5 +1,6 @@
 test
 log
+result
 utils/__pycache__
 process/__pycache__
 config/__pycache__
