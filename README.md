@@ -21,11 +21,19 @@
     posetrack
     inria
     RedWeb
+    apolloscape
+    blendedmvs
+    hrwsi
+    irs
+    megadepth
+    tartanair
 ```
 
 ## RUN command
 ```
     python create_mix_dataset_for_midas.py -o PATH
+
+    python depth_confidence.py --min_threshold 20
 
 ```
 ## data_2_nreal transfer
