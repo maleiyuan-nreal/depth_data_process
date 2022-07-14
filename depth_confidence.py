@@ -19,17 +19,27 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
-
+from bfuncs import check_and_make_dir
 from bfuncs.files import load_json_items, save_json_items
 from utils import transform_rgb
 
 
-def func_callback(args, pbar, whole_err_map):
+def func_callback(args, pbar, left_err_map, right_err_map, nds_info):
     pbar.update()
-    error_str = ["{:.4f}".format(e) for e in args[0][:2]]
-    result_file.write("\n".join(error_str))
-    result_file.write("\n")
-    whole_err_map += args[0][-1]
+    # error_str = ["{:.4f}".format(e) for e in args[0]["ratio"]]
+    # result_file.write("\n".join(error_str))
+    # result_file.write("\n")
+    mask_info = args[0]["mask"]
+    left_nds_item = args[0]["left_nds_item"]
+    right_nds_item = args[0]["right_nds_item"]
+    for mask_item in mask_info:
+        cv2.imwrite(mask_item['path'], mask_item['mask'])
+        if mask_item['camera_name'] == "left":
+            left_err_map += mask_item['mask']
+        if mask_item['camera_name'] == "right":
+            right_err_map += mask_item['mask']
+    nds_info.append(left_nds_item)
+    nds_info.append(right_nds_item)
 
 
 def func_core(task_info):
@@ -76,8 +86,23 @@ def func_core(task_info):
     right_error_pixel_num = sum(sum(chosen_right_mask))
     right_error_ratio = right_error_pixel_num / \
         (mask_right.shape[0] * mask_right.shape[1])
-    current_error_map = chosen_left_mask.astype("float32") + chosen_right_mask.astype("float32")
-    return [left_error_ratio, right_error_ratio, current_error_map]
+    left_mask_path = left_image_path.replace(
+        "left_image", "left_mask").replace(".jpg", ".png")
+    right_mask_path = right_image_path.replace(
+        "right_image", "right_mask").replace(".jpg", ".png")
+    check_and_make_dir(os.path.dirname(left_mask_path))
+    check_and_make_dir(os.path.dirname(right_mask_path))
+    mask_info = [
+        {"path": left_mask_path, "mask": chosen_left_mask.astype(
+            "uint8"), "camera_name": "left"},
+        {"path": right_mask_path, "mask": chosen_right_mask.astype(
+            "uint8"), "camera_name": "right"}
+    ]
+
+    left_nds_item['mask_path'] = os.path.relpath(left_mask_path, data_path)
+    right_nds_item['mask_path'] = os.path.relpath(right_mask_path, data_path)
+    ratio_info = [left_error_ratio, right_error_ratio]
+    return {"ratio": ratio_info, "mask": mask_info, "left_nds_item": left_nds_item, "right_nds_item": right_nds_item}
 
 
 def main(args):
@@ -90,7 +115,7 @@ def main(args):
         root_dir, "nreal_glasses/glasses_info_20220415_json")
     data_path = os.path.join(
         root_dir, "training_data/nreal_light_v4.0.0_ssl_2s/train_labeled_by_ssl_20220630")
-    mini_nds_path = os.path.join(data_path, "annotation_mini.nds")
+    mini_nds_path = os.path.join(data_path, "annotation_add_nreal_name.nds")
     mini_nds_info = load_json_items(mini_nds_path)
     left_list = [
         nds_item for nds_item in mini_nds_info if nds_item['camera_name'] == "left"]
@@ -100,8 +125,10 @@ def main(args):
     pbar = tqdm(total=len(left_list))
 
     pool = mp.Pool(args.n_proc)
-    whole_err_map = np.zeros((480, 640))
-    call_back = lambda *args: func_callback(args, pbar, whole_err_map)
+    left_err_map = np.zeros((480, 640))
+    right_err_map = np.zeros((480, 640))
+    nds_info = list()
+    call_back = lambda *args: func_callback(args, pbar, left_err_map, right_err_map, nds_info)
     for left_nds_item, right_nds_item in zip(left_list, right_list):
         assert left_nds_item['nreal_name'] == right_nds_item['nreal_name']
         assert left_nds_item['camera_name'] == "left"
@@ -123,7 +150,14 @@ def main(args):
     pool.close()
     pool.join()
 
-    cv2.imwrite("result/whole_err_map.png", whole_err_map)
+    cv2.imwrite(
+        "result/left_err_map_{}.png".format(args.min_threshold), left_err_map)
+    cv2.imwrite(
+        "result/right_err_map_{}.png".format(args.min_threshold), right_err_map)
+
+    nds_path = os.path.join(
+        data_path, "annotation_add_nreal_name_add_mask.nds")
+    save_json_items(nds_path, nds_info)
 
     time_end = time.time()
     time_cost = time_end - time_start
@@ -160,11 +194,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     log_filename = "log/confidence_{}.log".format(args.min_threshold)
-    result_filename = "result/confidence_{}.txt".format(args.min_threshold)
-    result_file = open(result_filename, 'a+')
+    # result_filename = "result/confidence_{}.txt".format(args.min_threshold)
+    # result_file = open(result_filename, 'a+')
     logging.basicConfig(filename=log_filename, format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                         datefmt="%d-%m-%Y %H:%M:%S", level=logging.DEBUG)
 
     main(args)
 
-    result_file.close()
+    # result_file.close()

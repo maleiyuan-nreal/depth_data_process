@@ -5,7 +5,7 @@ from bfuncs.images import SE3, project_depth_image_to_point_cloud, project_poind
 
 
 def project_rgb(depth, image, nreal_glass_info, need_inverse=False):
-    """_summary_
+    """利用深度信息将另外一目的rgb图投影到当前目的像素坐标下
 
     Args:
         depth : 深度图
@@ -32,8 +32,8 @@ def project_rgb(depth, image, nreal_glass_info, need_inverse=False):
     
     xyz_undistorted = project_depth_image_to_point_cloud(depth, K_in, distCoeffs_depth=kc_in)
 
-    xyz_undistorted = xyz_undistorted[xyz_undistorted[:, 2] <= 100, :]
-    xyz_undistorted = xyz_undistorted[xyz_undistorted[:, 2] > 0, :]
+    # xyz_undistorted = xyz_undistorted[xyz_undistorted[:, 2] <= 100, :]
+    # xyz_undistorted = xyz_undistorted[xyz_undistorted[:, 2] > 0, :]
     left_2_right_SE3 = SE3(rotation=left_q_right, translation=left_p_right)
     
     
