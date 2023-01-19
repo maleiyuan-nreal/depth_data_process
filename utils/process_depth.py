@@ -126,7 +126,10 @@ def process_depth(args, ori_depth_path, ouput_depth_path, mask_path):
         depth = cv2.imread(ori_depth_path, cv2.IMREAD_UNCHANGED)
         if mask is not None:
             depth = depth*(mask == 255)
-        output_depth = pretty_depth(depth)
+        if args.dataset == "HR-WSI":
+            output_depth = np.clip(1.0 / (depth + 1e-6) * 65535, 0, 2**16 - 1).astype(np.uint16)
+        else:
+            output_depth = pretty_depth(depth)
 
     elif ori_depth_path.endswith("h5"):
         hdf5_file_read = h5py.File(ori_depth_path, 'r')

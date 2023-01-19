@@ -20,7 +20,7 @@ from process.common_process import Base_Data
 class HRWSI(Base_Data):
     def __init__(self, output_path) -> None:
         self.NAME = "HR-WSI"
-        self.INPUT_DIR = "/home/lyma/SHARE_DATA/datadepth"
+        self.INPUT_DIR = "/data/depth/datasets/public/mono_extracted"
         self.NDS_FILE_NAME = os.path.join(
             output_path, self.NAME, "annotation.nds")
         self.OUTPUT_DIR = "data"
@@ -55,9 +55,9 @@ class HRWSI(Base_Data):
             for _, ori_image_path in enumerate(img_list):
                 path_dict = self.get_path(ori_image_path, split_type)
                 path_dict["valid_masks_path"] = os.path.join(self.INPUT_DIR, self.NAME, split_type, "valid_masks", get_file_name(ori_image_path).split(".")[0]+".png")
-                task_info = [args, path_dict, sample_num, self]
+                task_info = [args, path_dict, sample_num]
                 sample_num += 1
-                # nds_data_item = func_core(task_info)
+                # nds_data_item = self.func_core(task_info)
                 # call_back(args, pbar, nds_data_item)
                 pool.apply_async(self.func_core, (task_info, ), callback=call_back)
 
