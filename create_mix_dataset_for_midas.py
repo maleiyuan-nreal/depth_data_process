@@ -73,7 +73,7 @@ def main(args):
 
     if args.dataset != "ALL":
         assert args.dataset in list(obj_dict.keys())
-        obj_dict[args.dataset].process(args, collect_result)
+        obj_dict[args.dataset].process(args, func_core, collect_result)
     elif args.dataset == "ALL":
         for dataset_name in list(obj_dict.keys()):
             obj_dict[dataset_name].process(

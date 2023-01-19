@@ -20,7 +20,7 @@ class MegaDepth(Base_Data):
     def __init__(self, output_path) -> None:
         super().__init__()
         self.NAME = "MegaDepth_v1"
-        self.INPUT_DIR = "/home/lyma/SHARE_DATA/datadepth/MegaDepth/"
+        self.INPUT_DIR = "/data/depth/datasets/public/mono_extracted/MegaDepth"
         self.NDS_FILE_NAME = os.path.join(
             output_path, self.NAME, "annotation.nds")
         self.OUTPUT_DIR = "data"

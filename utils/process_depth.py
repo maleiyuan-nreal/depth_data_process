@@ -134,6 +134,7 @@ def process_depth(args, ori_depth_path, ouput_depth_path, mask_path):
 
         output_depth = np.array(depth)
         hdf5_file_read.close()
+        output_depth = np.clip(output_depth * 1000, 0, 2**16 - 1).astype(np.uint16)
 
         # if np.sum(depth > 1e-8) > 10:
         #     depth[ depth > np.percentile(depth[depth > 1e-8], 98)] = 0
