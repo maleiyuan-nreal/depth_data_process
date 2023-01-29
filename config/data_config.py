@@ -31,6 +31,7 @@ OUTPUT目录结构
 
 from process.process_megadepth import MegaDepth
 from process.process_apolloscape import ApolloScape
+from process.process_apolloscape_scene_parsing import ApolloScapeScene
 from process.process_blendedmvs import BlendedMVS
 from process.process_hrwsi import HRWSI
 from process.process_inria import INRIA
@@ -54,11 +55,12 @@ def init_obj(args):
     rw_obj = ReDWeb(output_path)
     blendedmvs_obj = BlendedMVS(output_path, transform_flag)
     apollospace_obj = ApolloScape(output_path)
+    apollospace_scene_obj = ApolloScapeScene(output_path)
     hrwsi_obj = HRWSI(output_path)
     tartanair_obj = TartanAir(output_path, transform_flag)
     irs_obj = IRS(output_path)
 
-    for obj in [blendedmvs_obj, apollospace_obj, tartanair_obj, hrwsi_obj,
+    for obj in [blendedmvs_obj, apollospace_obj, apollospace_scene_obj, tartanair_obj, hrwsi_obj,
                 inria_obj, nyuv2_obj, irs_obj, posetrack_obj, megadepth_obj, rw_obj]:
         obj_dict[obj.NAME] = obj
 

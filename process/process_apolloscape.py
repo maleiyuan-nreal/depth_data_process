@@ -27,7 +27,7 @@ class ApolloScape(Base_Data):
         self.IMAGE_SUFFIX = "jpg"
         self.DPETH_SUFFIX = "png"
 
-    def process(self, args, func_core, func_callback):
+    def process(self, args, func_callback):
         self.common_process(args)
         p = os.path.join(self.INPUT_DIR, self.NAME+"/*")
         dir_list = glob.glob(p)
@@ -58,7 +58,7 @@ class ApolloScape(Base_Data):
                 sample_num += 1
                 # nds_data_item = func_core(task_info)
                 # call_back(args, pbar, nds_data_item)
-                pool.apply_async(func_core, (task_info, ), callback=call_back)
+                pool.apply_async(self.func_core, (task_info, ), callback=call_back)
 
             pool.close()
             pool.join()
