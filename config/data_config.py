@@ -33,6 +33,7 @@ from process.process_megadepth import MegaDepth
 from process.process_apolloscape import ApolloScape
 from process.process_apolloscape_scene_parsing import ApolloScapeScene
 from process.process_blendedmvs import BlendedMVS
+from process.process_blendedmvg import BlendedMVG
 from process.process_hrwsi import HRWSI
 from process.process_inria import INRIA
 from process.process_irs import IRS
@@ -54,14 +55,16 @@ def init_obj(args):
     megadepth_obj = MegaDepth(output_path)
     rw_obj = ReDWeb(output_path)
     blendedmvs_obj = BlendedMVS(output_path, transform_flag)
+    blendedmvg_obj = BlendedMVG(output_path, transform_flag)
     apollospace_obj = ApolloScape(output_path)
     apollospace_scene_obj = ApolloScapeScene(output_path)
     hrwsi_obj = HRWSI(output_path)
     tartanair_obj = TartanAir(output_path, transform_flag)
     irs_obj = IRS(output_path)
 
-    for obj in [blendedmvs_obj, apollospace_obj, apollospace_scene_obj, tartanair_obj, hrwsi_obj,
-                inria_obj, nyuv2_obj, irs_obj, posetrack_obj, megadepth_obj, rw_obj]:
+    for obj in [blendedmvs_obj, blendedmvg_obj, apollospace_obj, apollospace_scene_obj, 
+                tartanair_obj, hrwsi_obj, inria_obj, nyuv2_obj, irs_obj, posetrack_obj, 
+                megadepth_obj, rw_obj]:
         obj_dict[obj.NAME] = obj
 
     return obj_dict

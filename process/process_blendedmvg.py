@@ -21,10 +21,10 @@ from process.common_process import Base_Data
 from config import nreal_param
 
 
-class BlendedMVS(Base_Data):
+class BlendedMVG(Base_Data):
     def __init__(self, output_path, transform_flag) -> None:
         super().__init__()
-        self.NAME = "BlendedMVS"
+        self.NAME = "BlendedMVG"
         self.INPUT_DIR = "/data/depth/datasets/public/mono_extracted"
         if transform_flag:
             self.NDS_FILE_NAME = os.path.join(
@@ -53,7 +53,7 @@ class BlendedMVS(Base_Data):
         output_depth = load_pfm(open(ori_depth_path, 'rb'))
         depth_image = self.mask_depth_image(
             output_depth, depth_start, depth_end)
-        depth_image = (depth_image*160.0).astype("uint16")
+        depth_image = (depth_image*80.0).astype("uint16")
         return depth_image
     
     
@@ -93,66 +93,66 @@ class BlendedMVS(Base_Data):
 
     def process(self, args, func_callback):
         self.common_process(args)
-        p = os.path.join(self.INPUT_DIR, self.NAME+"/high_res/*")
+        p = os.path.join(self.INPUT_DIR, self.NAME+"/low_res/*")
         dir_list = glob.glob(p)
         sample_num = 0
         nds_file_list = list()
         for dir_num, d in enumerate(dir_list):
-            for sub_d in glob.glob(d+"/*"):
-                img_list = glob.glob(sub_d+"/blended_images/*")
+            img_list = glob.glob(d+"/blended_images/*[!masked].jpg")
 
-                rel_sub_d = os.path.relpath(sub_d, os.path.join(
-                    self.INPUT_DIR, self.NAME))
-                sub_nds_file = os.path.join(
-                    args.output_path, self.NAME, self.OUTPUT_DIR, rel_sub_d, "annotation.nds")
-                logging.info(f"sub_nds_file: {sub_nds_file}")
+            rel_sub_d = os.path.relpath(d, os.path.join(
+                self.INPUT_DIR, self.NAME))
+            sub_nds_file = os.path.join(
+                args.output_path, self.NAME, self.OUTPUT_DIR, rel_sub_d, "annotation.nds")
+            logging.info(f"sub_nds_file: {sub_nds_file}")
 
-                pbar = tqdm(total=len(img_list))
-                pbar.set_description(
-                    "Creating {} nds dataset: ".format(rel_sub_d))
+            pbar = tqdm(total=len(img_list))
+            pbar.set_description(
+                "Creating {} nds dataset: ".format(rel_sub_d))
 
-                for dirs in self.DATA_TYPE_LIST:
-                    check_and_make_dir(os.path.join(
-                        args.output_path, self.NAME, self.OUTPUT_DIR, rel_sub_d, dirs))
+            for dirs in self.DATA_TYPE_LIST:
+                check_and_make_dir(os.path.join(
+                    args.output_path, self.NAME, self.OUTPUT_DIR, rel_sub_d, dirs))
 
-                pool = mp.Pool(args.n_proc)
-                nds_data = list()
-                call_back = lambda *args: func_callback(args, pbar, nds_data)
-                for _, ori_image_path in enumerate(img_list):
-                    info_dict = self.get_path(ori_image_path, rel_sub_d)
-                    cam_txt_path = ori_image_path.replace(
-                        "blended_images", "cams").split(".")[0]+"_cam.txt"
-                    cams = self.get_intrinsic(open(cam_txt_path, "r"))
-                    depth_start = cams[1, 3, 0] + cams[1, 3, 1]
-                    depth_end = cams[1, 3, 3] - cams[1, 3, 1]
-                    blendedmvs_K = cams[1, :3, :3]
-                    if args.transform:
-                        map1_x, map1_y = cv2.initUndistortRectifyMap(cameraMatrix=blendedmvs_K, distCoeffs=None, R=None, newCameraMatrix=nreal_param.nreal_left_K, size=(
-                            nreal_param.nreal_col, nreal_param.nreal_row), m1type=cv2.CV_32FC1)
-                        task_info = [args, map1_x, map1_y, info_dict,
-                                     depth_start, depth_end, sample_num]
-                        # nds_data_item = self.blendedmvs_data_2_nreal_core(task_info)
-                        pool.apply_async(self.blendedmvs_data_2_nreal_core, (task_info, ),
-                                         callback=call_back)
-                    else:
-                        K = {"fx": blendedmvs_K[0,0],
-                            "fy": blendedmvs_K[1,1],
-                            "cx": blendedmvs_K[0,2],
-                            "cy": blendedmvs_K[1,2]}
-                        info_dict.update(K)
-                        task_info = [args, info_dict,
-                                     depth_start, depth_end, sample_num]
-                        sample_num += 1
-                        # nds_data_item = self.blendedmvs_func_core(task_info)
-                        pool.apply_async(self.blendedmvs_func_core, (task_info, ),
-                                         callback=call_back)
+            pool = mp.Pool(args.n_proc)
+            nds_data = list()
+            call_back = lambda *args: func_callback(args, pbar, nds_data)
+            for _, ori_image_path in enumerate(img_list):
+                info_dict = self.get_path(ori_image_path, rel_sub_d)
+                cam_txt_path = ori_image_path.replace(
+                    "blended_images", "cams").split(".")[0]+"_cam.txt"
+                cams = self.get_intrinsic(open(cam_txt_path, "r"))
+                depth_start = cams[1, 3, 0] + cams[1, 3, 1]
+                depth_end = cams[1, 3, 3] - cams[1, 3, 1]
+                blendedmvs_K = cams[1, :3, :3]
+                if args.transform:
+                    map1_x, map1_y = cv2.initUndistortRectifyMap(cameraMatrix=blendedmvs_K, distCoeffs=None, R=None, newCameraMatrix=nreal_param.nreal_left_K, size=(
+                        nreal_param.nreal_col, nreal_param.nreal_row), m1type=cv2.CV_32FC1)
+                    task_info = [args, map1_x, map1_y, info_dict,
+                                    depth_start, depth_end, sample_num]
+                    # nds_data_item = self.blendedmvs_data_2_nreal_core(task_info)
+                    pool.apply_async(self.blendedmvs_data_2_nreal_core, (task_info, ),
+                                        callback=call_back)
+                else:
+                    K = {"fx": blendedmvs_K[0,0],
+                        "fy": blendedmvs_K[1,1],
+                        "cx": blendedmvs_K[0,2],
+                        "cy": blendedmvs_K[1,2]}
+                    info_dict.update(K)
+                    task_info = [args, info_dict,
+                                    depth_start, depth_end, sample_num]
+                    sample_num += 1
+                    # nds_data_item = self.blendedmvs_func_core(task_info)
+                    pool.apply_async(self.blendedmvs_func_core, (task_info, ),
+                                     callback=call_back)
 
-                pool.close()
-                pool.join()
+            pool.close()
+            pool.join()
 
-                nds_data.sort(key=lambda x: x['image_id'])
-                save_json_items(sub_nds_file, nds_data)
-                nds_file_list.append(sub_nds_file)
+            nds_data.sort(key=lambda x: x['image_id'])
+            save_json_items(sub_nds_file, nds_data)
+            nds_file_list.append(sub_nds_file)   
+            
             assert len(img_list) == len(nds_data)
             logging.info(
                 "Total dirs {}, currently {}/{}".format(len(dir_list), dir_num+1, len(dir_list)))
