@@ -15,7 +15,7 @@ from process.common_process import Base_Data
 class ReDWeb(Base_Data):
     def __init__(self, output_path) -> None:
         self.NAME = "ReDWeb_V1"
-        self.INPUT_DIR = "/home/lyma/SHARE_DATA/datadepth/reDWeb/"
+        self.INPUT_DIR = "/data/depth/datasets/public/mono_extracted"
         self.NDS_FILE_NAME = os.path.join(
             output_path, self.NAME, "annotation.nds")
         self.OUTPUT_DIR = "data"
@@ -25,7 +25,7 @@ class ReDWeb(Base_Data):
         self.DPETH_SUFFIX = "png"
         self.IMAGE_SUFFIX = "jpg"
 
-    def process(self, args, func_core, func_callback):
+    def process(self, args, func_callback):
 
         p = os.path.join(self.INPUT_DIR, self.NAME)
         img_list = glob.glob(p+"/"+self.SUB_INPUT_DIR[0]+"/*.jpg")
@@ -43,7 +43,7 @@ class ReDWeb(Base_Data):
         for image_id, ori_image_path in enumerate(img_list):
             path_dict = self.get_path(ori_image_path)
             task_info = [args, path_dict, image_id]
-            pool.apply_async(self,func_core, (task_info, ), callback=call_back)
+            pool.apply_async(self.func_core, (task_info, ), callback=call_back)
 
         pool.close()
         pool.join()

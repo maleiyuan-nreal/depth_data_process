@@ -129,6 +129,9 @@ def process_depth(args, ori_depth_path, ouput_depth_path, mask_path):
         if args.dataset == "HR-WSI":
             output_depth = np.clip(1.0 / (depth + 1e-6) * 65535, 0, 2**16 - 1).astype(np.uint16)
         else:
+            # uint8的相对深度，直接转到65535统一数据范围
+            if args.dataset == "ReDWeb_V1":
+                depth = depth * 257.0
             output_depth = pretty_depth(depth)
 
     elif ori_depth_path.endswith("h5"):

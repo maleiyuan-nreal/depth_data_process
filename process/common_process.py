@@ -105,23 +105,23 @@ class Base_Data(object):
         args, path_dict, image_id = task_info
         image = cv2.imread(path_dict["ori_images_path"])
 
-        # for data_type in self.DATA_TYPE_LIST:
-        #     if data_type == "depths":
-        #         if "valid_masks_path" in path_dict:
-        #             process_depth(args, path_dict["ori_depths_path"], os.path.join(
-        #                 self.NAME, path_dict["output_depths_path"]),
-        #                 os.path.join(self.NAME, path_dict["valid_masks_path"]))
-        #         else:
-        #             process_depth(args, path_dict["ori_depths_path"], os.path.join(
-        #                 self.NAME, path_dict["output_depths_path"]), "")
-        #     elif data_type == "segmentations":
-        #         process_segmentation(args, path_dict["ori_segmentations_path"], os.path.join(
-        #             self.NAME, path_dict["output_segmentations_path"]))
-        #     elif data_type == "images":
-        #         process_ori_image(args, path_dict["ori_images_path"], os.path.join(
-        #             self.NAME, path_dict["output_images_path"]))
-        #     else:
-        #         raise NotImplementedError
+        for data_type in self.DATA_TYPE_LIST:
+            if data_type == "depths":
+                if "valid_masks_path" in path_dict:
+                    process_depth(args, path_dict["ori_depths_path"], os.path.join(
+                        self.NAME, path_dict["output_depths_path"]),
+                        os.path.join(self.NAME, path_dict["valid_masks_path"]))
+                else:
+                    process_depth(args, path_dict["ori_depths_path"], os.path.join(
+                        self.NAME, path_dict["output_depths_path"]), "")
+            elif data_type == "segmentations":
+                process_segmentation(args, path_dict["ori_segmentations_path"], os.path.join(
+                    self.NAME, path_dict["output_segmentations_path"]))
+            elif data_type == "images":
+                process_ori_image(args, path_dict["ori_images_path"], os.path.join(
+                    self.NAME, path_dict["output_images_path"]))
+            else:
+                raise NotImplementedError
 
         nds_data_item = format_nds(image_id, image.shape, path_dict)
         return nds_data_item
