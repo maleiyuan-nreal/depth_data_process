@@ -41,6 +41,7 @@ from process.process_nyuv2 import NYUV2
 from process.process_posetrack import POSETRCK
 from process.process_redweb import ReDWeb
 from process.process_tartanair import TartanAir
+from process.process_nyu import NYU
 
 
 def init_obj(args):
@@ -61,10 +62,11 @@ def init_obj(args):
     hrwsi_obj = HRWSI(output_path)
     tartanair_obj = TartanAir(output_path, transform_flag)
     irs_obj = IRS(output_path)
-
+    nyu_obj = NYU(output_path)
+    
     for obj in [blendedmvs_obj, blendedmvg_obj, apollospace_obj, apollospace_scene_obj, 
                 tartanair_obj, hrwsi_obj, inria_obj, nyuv2_obj, irs_obj, posetrack_obj, 
-                megadepth_obj, rw_obj]:
+                megadepth_obj, rw_obj, nyu_obj]:
         obj_dict[obj.NAME] = obj
 
     return obj_dict
